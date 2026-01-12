@@ -1,0 +1,7 @@
+test,metric,value,unit
+Arsenal Trend,Slope,0.0206,types/year
+Arsenal Trend,R-squared,0.1549,
+Arsenal Trend,p-value,2.31e-01,
+2015 vs 2025,2015 Mean Arsenal,3.98,types
+2015 vs 2025,2025 Mean Arsenal,4.25,types
+2015 vs 2025,Change,+0.27,types
