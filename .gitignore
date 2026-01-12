@@ -8,6 +8,10 @@ venv/
 ENV/
 .venv/
 
+# Claude Code (include project config, exclude local settings)
+.claude/settings.local.json
+.claude/*.jsonl
+
 # Data files (users should collect their own)
 data/
 *.parquet
