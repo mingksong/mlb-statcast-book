@@ -1,0 +1,7 @@
+test,metric,value,unit
+Fastball Trend,Slope,-0.769,%/year
+Fastball Trend,R-squared,0.8633,
+Fastball Trend,p-value,3.54e-05,
+Strike Rate Trend,Slope,0.130,%/year
+Strike Rate Trend,R-squared,0.7254,
+Strike Rate Trend,p-value,8.76e-04,
