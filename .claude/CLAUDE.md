@@ -72,13 +72,47 @@ df = load_seasons(AVAILABLE_SEASONS)
 
 ## Available Skills
 
+### Research Pipeline
+
 | Skill | Trigger | Purpose |
 |-------|---------|---------|
 | `chapter-orchestrator` | "start chapter N research" | **Research Orchestrator 2.0** - Full 6-phase pipeline |
 | `analysis-writer` | "create analysis script" | analysis.py templates |
 | `figure-generator` | "create figure" | Visualization standards |
-| `chapter-docs` | "write documentation" | README + book chapter |
 | `code-validator` | "validate code" | Reproducibility testing |
+
+### Report Generation Pipeline
+
+| Skill | Trigger | Purpose |
+|-------|---------|---------|
+| `chapter-docs` | "write documentation" | Orchestrates report pipeline |
+| `report-content-organizer` | Phase 1 | Structure report, extract actual values |
+| `report-code-extractor` | Phase 2 | Extract clean, executable code blocks |
+| `report-converter` | Phase 3 | Generate final ABDWR markdown |
+
+### Report Pipeline Flow
+
+```
+PREREQUISITE: analysis.py executed, results + figures generated
+
+Phase 1: CONTENT ORGANIZER
+├── Read results/*.csv for actual values
+├── Inventory figures/*.png
+├── Define section structure
+└── Mark code insertion points
+
+Phase 2: CODE EXTRACTOR
+├── Parse analysis.py
+├── Extract relevant code blocks
+├── Remove debug (print statements)
+└── Add explanatory comments
+
+Phase 3: REPORT CONVERTER
+├── Merge content + code
+├── Insert actual values
+├── Generate markdown tables
+└── Apply ABDWR style
+```
 
 ---
 
