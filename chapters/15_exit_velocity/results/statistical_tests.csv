@@ -1,0 +1,2 @@
+test,early_mean,late_mean,change,t_statistic,p_value,cohens_d,interpretation
+Exit Velocity (2015-18 vs 2022-25),84.00357160185014,82.61785261981824,-1.3857189820319036,45.97200238974432,0.0,-0.09252450958192372,negligible
