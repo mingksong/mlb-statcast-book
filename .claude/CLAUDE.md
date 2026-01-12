@@ -7,11 +7,51 @@ A data-driven book about MLB baseball using Statcast data (2015-2025).
 - **Repository**: https://github.com/mingksong/mlb-statcast-book
 - **Language**: English (all code, comments, and documentation)
 - **Target**: Amazon PDF publication
+- **Chapters**: 40 research topics across 5 parts
+
+---
+
+## Quick Start: Research Command
+
+**To start a chapter research**:
+```
+start chapter N research
+```
+
+Example: `start chapter 3 research` → Executes Pitch Type Evolution analysis
+
+This triggers **Research Orchestrator 2.0** which executes:
+1. PLAN → Research design
+2. EXTRACT → Data loading
+3. DESCRIBE → Descriptive statistics
+4. ANALYZE → Statistical tests (t-test, effect size, CI)
+5. VISUALIZE → Publication-ready figures
+6. DOCUMENT → README + book chapter
+
+---
+
+## Research Plan
+
+**Reference**: `RESEARCH_PLAN.md` contains all chapter topics with:
+- Chapter number and title
+- Status (DONE/GO/PARTIAL)
+- Required data columns
+- Part assignment
+
+### Chapter Status
+
+| Part | Chapters | Status |
+|------|----------|--------|
+| II: Pitching | 02-14 | 02 DONE, rest GO |
+| III: Batting | 15-25 | All GO (25 PARTIAL) |
+| IV: Game Mgmt | 26-33 | All GO |
+| V: League Trends | 34-40 | All GO |
+
+---
 
 ## Data Access
 
 ```python
-# Load from parquet files
 from statcast_analysis import load_season, load_seasons, AVAILABLE_SEASONS
 
 # Single season
@@ -20,71 +60,92 @@ df = load_season(2024, columns=['pitch_type', 'release_speed'])
 # Multiple seasons
 df = load_seasons(range(2020, 2026))
 
-# Available: 2015-2025 (11 seasons, 7.4M+ pitches)
+# All seasons (2015-2025, 7.4M+ pitches)
+df = load_seasons(AVAILABLE_SEASONS)
 ```
 
 **Data location**: `data/raw/statcast_YYYY.parquet`
 
-## Key Modules
-
-| Module | Purpose |
-|--------|---------|
-| `src/statcast_analysis/` | Shared analysis library |
-| `collector/` | Data collection via pybaseball |
-| `chapters/` | Individual chapter analyses |
-| `book/` | Final book content (markdown) |
-| `scripts/` | Build and validation tools |
-
-## Chapter Workflow
-
-```
-1. Create chapter: chapters/XX_topic/
-2. Write analysis.py (use template)
-3. Run analysis, generate figures
-4. Write README.md (GitHub)
-5. Write book chapter (book/partX/chXX.md)
-6. Validate: python scripts/validate_code.py
-```
-
-## Available Skills
-
-| Skill | Purpose |
-|-------|---------|
-| `chapter-orchestrator` | Full chapter creation pipeline |
-| `analysis-writer` | Create analysis.py scripts |
-| `figure-generator` | Create visualizations |
-| `chapter-docs` | Write documentation |
-| `code-validator` | Test code reproducibility |
-
-## Code Standards
-
-- All comments and docstrings in English
-- Use `statcast_analysis` library for data loading
-- Save figures to `figures/` at 150 DPI
-- Save results to `results/` as CSV
-- Follow the analysis.py template structure
-
-## Common Statcast Columns
-
-**Pitch data**: pitch_type, release_speed, release_spin_rate, spin_axis
-**Movement**: pfx_x, pfx_z (horizontal/vertical break)
-**Location**: plate_x, plate_z, zone
-**Batted ball**: launch_speed, launch_angle, hit_distance_sc
-**Identifiers**: pitcher, batter, game_pk, at_bat_number, game_year
-
-## Pitch Type Codes
-
-| Code | Type |
-|------|------|
-| FF | 4-Seam Fastball |
-| SI | Sinker |
-| FC | Cutter |
-| SL | Slider |
-| ST | Sweeper |
-| CU | Curveball |
-| CH | Changeup |
-| FS | Splitter |
+**PA-level aggregation**: `PA_KEY = game_pk + at_bat_number`
 
 ---
 
+## Available Skills
+
+| Skill | Trigger | Purpose |
+|-------|---------|---------|
+| `chapter-orchestrator` | "start chapter N research" | **Research Orchestrator 2.0** - Full 6-phase pipeline |
+| `analysis-writer` | "create analysis script" | analysis.py templates |
+| `figure-generator` | "create figure" | Visualization standards |
+| `chapter-docs` | "write documentation" | README + book chapter |
+| `code-validator` | "validate code" | Reproducibility testing |
+
+---
+
+## Project Structure
+
+```
+mlb-statcast-book/
+├── RESEARCH_PLAN.md        # Chapter topics & status
+├── chapters/               # Individual analyses
+│   ├── 02_velocity_trend/  # [DONE]
+│   ├── 03_pitch_type/      # [PENDING]
+│   └── ...
+├── book/                   # Book content (markdown)
+├── src/statcast_analysis/  # Shared library
+├── collector/              # Data collection
+└── scripts/                # Build & validation
+```
+
+---
+
+## Statistical Requirements
+
+Each chapter must include:
+
+1. **Descriptive stats**: n, mean, std, median, percentiles
+2. **Trend analysis**: Linear regression with R², p-value
+3. **Effect size**: Cohen's d with interpretation
+4. **Confidence intervals**: 95% CI for key metrics
+5. **Significance tests**: t-test for period comparisons
+
+### Interpretation Guidelines
+
+| Metric | Weak | Moderate | Strong |
+|--------|------|----------|--------|
+| R² | <0.1 | 0.1-0.3 | >0.3 |
+| Cohen's d | <0.2 | 0.2-0.8 | >0.8 |
+| p-value | >0.05 | 0.01-0.05 | <0.01 |
+
+---
+
+## Common Statcast Columns
+
+| Category | Columns |
+|----------|---------|
+| Pitch | pitch_type, release_speed, release_spin_rate |
+| Movement | pfx_x, pfx_z |
+| Location | plate_x, plate_z, zone |
+| Batted ball | launch_speed, launch_angle |
+| Identifiers | pitcher, batter, game_pk, at_bat_number |
+| Game context | game_year, inning, balls, strikes, outs_when_up |
+
+---
+
+## Pitch Type Codes
+
+| Code | Type | Group |
+|------|------|-------|
+| FF | 4-Seam Fastball | Fastball |
+| SI | Sinker | Fastball |
+| FC | Cutter | Fastball |
+| SL | Slider | Breaking |
+| ST | Sweeper | Breaking |
+| CU | Curveball | Breaking |
+| CH | Changeup | Offspeed |
+| FS | Splitter | Offspeed |
+
+---
+
+*Research Orchestrator 2.0 - Statistical rigor meets baseball analytics*
 *Last updated: 2025-01-12*
