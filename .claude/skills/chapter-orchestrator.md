@@ -292,7 +292,7 @@ Include:
 - File listing
 - Reproducibility instructions
 
-#### 6.2 Create Book Chapter
+#### 6.2 Create Book Chapter (ABDWR Style)
 
 Location: `book/partX_category/chXX_topic.md`
 
@@ -301,34 +301,99 @@ Location: `book/partX_category/chXX_topic.md`
 > ![Figure](../../chapters/XX_topic/figures/fig01_xxx.png)
 > ```
 
-Structure:
+**Writing Style Reference**: [Analyzing Baseball Data with R, 3rd Edition](https://beanumber.github.io/abdwr3e/)
+
+**Key Principles**:
+
+| Element | ABDWR Style |
+|---------|-------------|
+| Tone | Conversational ("Suppose we...", "Let's explore...") |
+| Code | Interwoven with narrative, not separated |
+| Flow | Exploration → Discovery → Explanation |
+| Audience | Beginner-friendly, step-by-step |
+| Statistics | Compute first, then explain patterns |
+
+**Structure Template**:
+
 ```markdown
-# [Chapter Title]
+# Chapter N: [Title]
 
-## Key Findings
-- [Finding 1 with statistic]
-- [Finding 2 with statistic]
-- [Finding 3 with statistic]
+[Opening hook - 2-3 sentences introducing the question]
 
-## The Story
-[Narrative explanation for general audience]
+In this chapter, we'll explore [topic] using Statcast data from 2015 to 2025.
 
-## The Analysis
-[Code snippets with explanations]
+## Getting Started
 
-## Statistical Validation
-| Test | Result | Interpretation |
-|------|--------|----------------|
-| Trend slope | +X.XX/year | Significant increase |
-| Cohen's d | X.XX | [Effect size] effect |
-| p-value | <0.001 | Highly significant |
+Let's begin by loading our data:
 
-## Visualizations
-[Embedded figures with captions]
+\`\`\`python
+from statcast_analysis import load_seasons, AVAILABLE_SEASONS
+
+df = load_seasons(AVAILABLE_SEASONS, columns=['col1', 'col2'])
+print(f"Total records: {len(df):,}")
+\`\`\`
+
+[Brief explanation of what we loaded]
+
+## [First Analysis Section]
+
+Suppose we want to [specific question]. We can [approach]:
+
+\`\`\`python
+# Code that answers the question
+result = df.groupby('game_year')['metric'].mean()
+print(result)
+\`\`\`
+
+The results reveal [observation]...
+
+![Figure Description](../../chapters/XX_topic/figures/fig01_xxx.png)
+
+[Interpretation of the figure in context]
+
+## Is This Real? Statistical Validation
+
+Before drawing conclusions, we should ask: Is this [finding]
+statistically significant, or just random variation?
+
+\`\`\`python
+from scipy import stats
+slope, intercept, r, p, se = stats.linregress(x, y)
+print(f"R² = {r**2:.3f}, p-value = {p:.2e}")
+\`\`\`
+
+With an R² of [value] and p < [threshold], we can conclude...
+
+## [Additional Analysis Sections as needed]
+
+[Continue pattern: Question → Code → Result → Interpretation]
+
+## What We Learned
+
+[Summary of key findings - conversational tone]
+
+1. **Finding 1**: [Specific result with number]
+2. **Finding 2**: [Specific result with number]
+3. **Finding 3**: [Specific result with number]
 
 ## Try It Yourself
+
+The complete analysis code is available at:
 github.com/mingksong/mlb-statcast-book/chapters/XX_topic/
+
+Try modifying the code to explore:
+- [Suggested extension 1]
+- [Suggested extension 2]
 ```
+
+**Writing Tips**:
+
+1. **Start with curiosity**: "Have you ever wondered why..." or "Over the past decade..."
+2. **Show, don't tell**: Let the data reveal patterns before explaining
+3. **Use transitions**: "This raises an interesting question..." or "But wait..."
+4. **Explain code inline**: Brief comments within code blocks
+5. **Connect to baseball**: Reference real players, games, or situations
+6. **End with exploration**: Suggest ways readers can extend the analysis
 
 #### 6.3 Reproducibility Check
 

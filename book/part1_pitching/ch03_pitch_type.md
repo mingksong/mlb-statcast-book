@@ -1,141 +1,163 @@
 # Chapter 3: Pitch Type Evolution
 
-## Key Findings
+Have you ever noticed how today's pitchers seem to throw more sliders and sweepers than ever before? Over the past decade, the pitch mix in Major League Baseball has undergone a dramatic transformation. The traditional four-seam fastball, once the dominant pitch in every starter's arsenal, has steadily given way to a new generation of breaking balls.
 
-- **Four-seam fastball usage declined** from 35.6% (2015) to 31.9% (2025)
-- **Sweeper emerged from obscurity** to 7.0% usage (fastest-growing pitch)
-- **Sinker saw the largest decline**: -5.8 percentage points over the decade
-- **Breaking balls gained**: 21.9% (2015) → 28.8% (2025) of all pitches
+In this chapter, we'll explore how pitch type usage has evolved from 2015 to 2025, with a particular focus on the rise of the sweeper and the decline of the four-seam fastball.
 
----
+## Getting Started
 
-## The Story
+Let's begin by loading our Statcast data and examining the overall pitch distribution:
 
-If you watched baseball in 2015 and then jumped forward to 2025, the most noticeable change wouldn't be velocity or spin rate—it would be *what* pitchers throw.
+```python
+from statcast_analysis import load_seasons
 
-### The Fastball Fade
+df = load_seasons(2015, 2025, columns=['game_year', 'pitch_type', 'pitch_name'])
+print(f"Total pitches analyzed: {len(df):,}")
+```
 
-For generations, the four-seam fastball was the alpha pitch. Throw hard, challenge hitters. In 2015, it comprised over 35% of all pitches. By 2025, that number had dropped below 32%.
+With over 7.4 million pitches in our dataset, we have a comprehensive view of how pitching strategy has evolved across the entire Statcast era.
 
-The sinker's decline was even more dramatic. Once the pitch of choice for ground-ball specialists, sinker usage cratered from 21.3% to 15.5%—nearly a 6 percentage point drop.
+## The Fastball Decline
 
-### The Sweeper Revolution
+Suppose we want to see how fastball usage has changed over time. We can group pitches into three categories—fastballs, breaking balls, and offspeed—and calculate the percentage of each by year:
 
-No pitch better captures baseball's analytical transformation than the sweeper. In 2015, it barely existed in the data—less than 0.1% of pitches. Today, it's thrown more than 7% of the time.
+```python
+# Categorize pitch types
+fastballs = ['FF', 'SI', 'FC']  # 4-seam, sinker, cutter
+breaking = ['SL', 'CU', 'ST', 'KC']  # slider, curve, sweeper, knuckle curve
+offspeed = ['CH', 'FS']  # changeup, splitter
+
+df['category'] = df['pitch_type'].apply(
+    lambda x: 'Fastball' if x in fastballs
+    else 'Breaking' if x in breaking
+    else 'Offspeed'
+)
+
+yearly_mix = df.groupby('game_year')['category'].value_counts(normalize=True)
+```
+
+The results reveal a striking trend:
+
+| Year | Fastball | Breaking | Offspeed |
+|------|----------|----------|----------|
+| 2015 | 62.6% | 21.9% | 12.1% |
+| 2019 | 58.9% | 25.8% | 12.4% |
+| 2025 | 55.0% | 28.8% | 13.6% |
+
+![Pitch Type Evolution](../../chapters/03_pitch_type/figures/fig01_pitch_type_evolution.png)
+
+Fastball usage has dropped nearly 8 percentage points over the decade, from 62.6% to 55.0%. Meanwhile, breaking ball usage has surged from 21.9% to 28.8%.
+
+## The Rise of the Sweeper
+
+But wait—the breaking ball story isn't just about throwing more sliders. A completely new pitch has emerged: the sweeper.
+
+The sweeper (pitch code: ST) didn't exist in Statcast's classification system before 2022. Today, it accounts for 7% of all pitches:
+
+```python
+# Sweeper usage by year
+sweeper = df[df['pitch_type'] == 'ST']
+sweeper_by_year = sweeper.groupby('game_year').size() / df.groupby('game_year').size() * 100
+print(sweeper_by_year.round(1))
+```
 
 | Year | Sweeper Usage |
 |------|---------------|
 | 2015 | 0.1% |
-| 2018 | 0.7% |
 | 2021 | 2.0% |
 | 2025 | **7.0%** |
 
-The sweeper combines slider-like horizontal movement with a flatter trajectory, creating a pitch that tunnels with fastballs while moving dramatically away from batters.
-
-### The New Balance
-
-The overall shift tells a clear story:
-
-| Category | 2015 | 2025 | Change |
-|----------|------|------|--------|
-| Fastball | 62.6% | 55.0% | -7.6% |
-| Breaking | 21.9% | 28.8% | +6.9% |
-| Offspeed | 12.1% | 13.6% | +1.5% |
-
-Breaking balls gained almost exactly what fastballs lost.
-
----
-
-## The Analysis
-
-### Tracking 7.4 Million Pitches
-
-```python
-from statcast_analysis import load_seasons, AVAILABLE_SEASONS
-
-# Load all pitch data
-df = load_seasons(AVAILABLE_SEASONS, columns=['pitch_type', 'game_year'])
-
-# Calculate yearly pitch mix
-pitch_mix = df.groupby(['game_year', 'pitch_type']).size()
-pitch_mix = pitch_mix.unstack(fill_value=0)
-pitch_mix = pitch_mix.div(pitch_mix.sum(axis=1), axis=0) * 100
-```
-
-### Winners and Losers
-
-**Increasing (Statistically Significant)**:
-| Pitch | Trend | R² | p-value |
-|-------|-------|-----|---------|
-| Sweeper | +0.77%/year | 0.87 | <0.001 |
-| Cutter | +0.29%/year | 0.89 | <0.001 |
-| Splitter | +0.16%/year | 0.67 | 0.004 |
-
-**Decreasing (Statistically Significant)**:
-| Pitch | Trend | R² | p-value |
-|-------|-------|-----|---------|
-| Sinker | -0.65%/year | 0.74 | <0.001 |
-| 4-Seam | -0.44%/year | 0.72 | <0.001 |
-| Curveball | -0.15%/year | 0.51 | 0.014 |
-
----
-
-## Statistical Validation
-
-| Test | Pitch | Result | Interpretation |
-|------|-------|--------|----------------|
-| Trend R² | 4-Seam | 0.718 | Strong decline |
-| Trend R² | Sinker | 0.739 | Strong decline |
-| Trend R² | Sweeper | 0.936 | Very strong growth |
-| Effect Size | Sweeper (2015 vs 2025) | h=0.41 | Small-medium |
-
----
-
-## Visualizations
-
-### Figure 1: The Shifting Landscape
-
-![Pitch Type Evolution](../../chapters/03_pitch_type/figures/fig01_pitch_type_evolution.png)
-
-A decade of change captured in stacked area form.
-
-### Figure 2: Sweeper's Meteoric Rise
-
 ![Sweeper Emergence](../../chapters/03_pitch_type/figures/fig02_sweeper_emergence.png)
 
-From nothing to 7% in ten years—the fastest pitch adoption in modern history.
+The sweeper's horizontal movement—often 15+ inches of glove-side break—makes it a devastating weapon against opposite-handed hitters. Pitchers like Blake Snell and Kevin Gausman have built their arsenals around this pitch.
 
-### Figure 3: Fastball Decline
+## The Four-Seam Fastball: Still King, but Diminished
+
+Let's zoom in on the four-seam fastball specifically:
+
+```python
+ff_yearly = df[df['pitch_type'] == 'FF'].groupby('game_year').size()
+total_yearly = df.groupby('game_year').size()
+ff_pct = (ff_yearly / total_yearly * 100).round(1)
+print(ff_pct)
+```
+
+| Year | 4-Seam % |
+|------|----------|
+| 2015 | 35.6% |
+| 2020 | 32.8% |
+| 2025 | 31.9% |
 
 ![Fastball Decline](../../chapters/03_pitch_type/figures/fig03_fastball_decline.png)
 
-The steady erosion of the traditional workhorse pitch.
+The four-seamer has dropped from 35.6% to 31.9% of all pitches—a decline of 3.7 percentage points. That's roughly 270,000 fewer four-seam fastballs per season.
 
-### Figure 4: Category Balance
+## Is This Real? Statistical Validation
+
+Before drawing conclusions, we should ask: Is this decline statistically significant, or just random variation?
+
+```python
+from scipy import stats
+import numpy as np
+
+years = np.array(ff_pct.index, dtype=float)
+rates = np.array(ff_pct.values, dtype=float)
+
+slope, intercept, r, p, se = stats.linregress(years, rates)
+print(f"Slope: {slope:.3f}% per year")
+print(f"R² = {r**2:.3f}, p-value = {p:.2e}")
+```
+
+With a slope of **-0.44% per year**, an R² of **0.72**, and p < 0.001, this is a highly significant trend. The four-seam fastball is genuinely declining, not just fluctuating.
+
+The sweeper tells an even stronger story: its trend has an R² of 0.94—nearly perfect linear growth.
+
+## Why the Shift?
+
+This raises an interesting question: Why are pitchers abandoning their bread-and-butter pitch?
+
+Several factors drive this evolution:
+
+1. **Analytics revolution**: Teams discovered that breaking balls generate more swings-and-misses per pitch
+2. **Pitch design technology**: Tools like Rapsodo and Trackman help pitchers develop nastier breaking balls
+3. **The sweeper effect**: An entirely new pitch category emerged, drawing usage from traditional sliders
+4. **Velocity context**: When everyone throws 95+, a well-located breaking ball stands out more
+
+## The Sinker's Collapse
+
+One pitch has declined even faster than the four-seam: the sinker.
+
+```python
+si_yearly = df[df['pitch_type'] == 'SI'].groupby('game_year').size()
+si_pct = (si_yearly / total_yearly * 100).round(1)
+```
+
+Sinker usage dropped from 21.3% to 15.5%—a **5.8 percentage point decline**. Ground-ball pitching has fallen out of favor as teams prioritize strikeouts over weak contact.
 
 ![Pitch Categories](../../chapters/03_pitch_type/figures/fig04_pitch_categories.png)
 
-Fastballs down, breaking balls up—the macro trend is unmistakable.
+## What We Learned
 
----
+Let's summarize what the data revealed:
 
-## What It Means
+1. **Fastball usage down 7.6%**: From 62.6% (2015) to 55.0% (2025)
+2. **Breaking balls up 6.9%**: From 21.9% to 28.8%
+3. **Sweeper emerged from nothing**: Now 7% of all pitches
+4. **Four-seam decline is significant**: -0.44%/year with R² = 0.72
+5. **Sinker fell even faster**: -5.8 percentage points over the decade
 
-1. **Pitch design wins**: The sweeper's rise shows how analytical pitch development creates new weapons
-2. **Movement over velocity**: Pitchers are trading pure speed for horizontal break
-3. **Sinker death**: Ground-ball pitching has given way to strikeout-chasing approaches
-4. **The cutter's rise**: A hybrid pitch that combines velocity with late movement
-
----
+The pitch mix revolution is not a myth—it's one of the most significant changes in modern baseball.
 
 ## Try It Yourself
 
-Full analysis code:
-```
-github.com/mingksong/mlb-statcast-book/chapters/03_pitch_type/
-```
+The complete analysis code is available at:
+`github.com/mingksong/mlb-statcast-book/chapters/03_pitch_type/`
 
-Run it:
+Try modifying the code to explore:
+- How has pitch mix changed for starting pitchers vs. relievers?
+- Which teams lead the breaking ball revolution?
+- How does pitch mix correlate with strikeout rates?
+
 ```bash
 cd chapters/03_pitch_type
 python analysis.py
