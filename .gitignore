@@ -11,7 +11,9 @@ ENV/
 # Data files (users should collect their own)
 data/
 *.parquet
-*.csv
+
+# Results CSVs in data directories
+data/**/*.csv
 
 # IDE
 .idea/
