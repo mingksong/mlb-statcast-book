@@ -95,25 +95,25 @@ pitch_mix = pitch_mix.div(pitch_mix.sum(axis=1), axis=0) * 100
 
 ### Figure 1: The Shifting Landscape
 
-![Pitch Type Evolution](../chapters/03_pitch_type/figures/fig01_pitch_type_evolution.png)
+![Pitch Type Evolution](../../chapters/03_pitch_type/figures/fig01_pitch_type_evolution.png)
 
 A decade of change captured in stacked area form.
 
 ### Figure 2: Sweeper's Meteoric Rise
 
-![Sweeper Emergence](../chapters/03_pitch_type/figures/fig02_sweeper_emergence.png)
+![Sweeper Emergence](../../chapters/03_pitch_type/figures/fig02_sweeper_emergence.png)
 
 From nothing to 7% in ten years—the fastest pitch adoption in modern history.
 
 ### Figure 3: Fastball Decline
 
-![Fastball Decline](../chapters/03_pitch_type/figures/fig03_fastball_decline.png)
+![Fastball Decline](../../chapters/03_pitch_type/figures/fig03_fastball_decline.png)
 
 The steady erosion of the traditional workhorse pitch.
 
 ### Figure 4: Category Balance
 
-![Pitch Categories](../chapters/03_pitch_type/figures/fig04_pitch_categories.png)
+![Pitch Categories](../../chapters/03_pitch_type/figures/fig04_pitch_categories.png)
 
 Fastballs down, breaking balls up—the macro trend is unmistakable.
 

@@ -84,19 +84,19 @@ Both improvements are highly statistically significant.
 
 ### Figure 1: Release Consistency Trend
 
-![Release Consistency](../chapters/11_tunneling/figures/fig01_release_consistency.png)
+![Release Consistency](../../chapters/11_tunneling/figures/fig01_release_consistency.png)
 
 Year-over-year variation in release point consistency.
 
 ### Figure 2: FB-Breaking Separation
 
-![FB-Breaking Separation](../chapters/11_tunneling/figures/fig02_fb_breaking_separation.png)
+![FB-Breaking Separation](../../chapters/11_tunneling/figures/fig02_fb_breaking_separation.png)
 
 The gap between fastball and breaking ball release points has narrowed.
 
 ### Figure 3: Distribution Comparison
 
-![Distribution](../chapters/11_tunneling/figures/fig03_consistency_distribution.png)
+![Distribution](../../chapters/11_tunneling/figures/fig03_consistency_distribution.png)
 
 2025 pitchers cluster toward tighter consistency than 2015 pitchers.
 

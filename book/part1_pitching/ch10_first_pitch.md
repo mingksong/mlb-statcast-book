@@ -87,13 +87,13 @@ for year in range(2015, 2026):
 
 ### Figure 1: First Pitch Type Trend
 
-![First Pitch Type](../chapters/10_first_pitch/figures/fig01_first_pitch_type.png)
+![First Pitch Type](../../chapters/10_first_pitch/figures/fig01_first_pitch_type.png)
 
 Fastballs declining, breaking balls rising - the lines are crossing.
 
 ### Figure 2: Strike Rate
 
-![Strike Rate](../chapters/10_first_pitch/figures/fig02_strike_rate.png)
+![Strike Rate](../../chapters/10_first_pitch/figures/fig02_strike_rate.png)
 
 Despite fewer fastballs, pitchers are getting slightly more first-pitch strikes.
 

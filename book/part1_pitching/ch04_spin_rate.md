@@ -101,25 +101,25 @@ for year in AVAILABLE_SEASONS:
 
 ### Figure 1: The Spin Rate Timeline
 
-![Spin Rate Trend](../chapters/04_spin_rate/figures/fig01_spin_rate_trend.png)
+![Spin Rate Trend](../../chapters/04_spin_rate/figures/fig01_spin_rate_trend.png)
 
 Notice the 2020 peak and 2021 drop—the signature of the sticky substance saga.
 
 ### Figure 2: High-Spin Revolution
 
-![2500+ Percentage](../chapters/04_spin_rate/figures/fig02_2500plus_percentage.png)
+![2500+ Percentage](../../chapters/04_spin_rate/figures/fig02_2500plus_percentage.png)
 
 The proportion of elite-spin fastballs has more than doubled.
 
 ### Figure 3: Spin Across Pitch Types
 
-![Spin by Pitch Type](../chapters/04_spin_rate/figures/fig03_spin_by_pitch_type.png)
+![Spin by Pitch Type](../../chapters/04_spin_rate/figures/fig03_spin_by_pitch_type.png)
 
 All pitch types show upward spin trends.
 
 ### Figure 4: Distribution Shift
 
-![Distribution Comparison](../chapters/04_spin_rate/figures/fig04_distribution_comparison.png)
+![Distribution Comparison](../../chapters/04_spin_rate/figures/fig04_distribution_comparison.png)
 
 The entire curve has shifted right over the decade.
 

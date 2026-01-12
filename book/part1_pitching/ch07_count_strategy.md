@@ -88,25 +88,25 @@ for balls in range(4):
 
 ### Figure 1: Fastball Heatmap
 
-![Fastball by Count](../chapters/07_count_strategy/figures/fig01_fastball_by_count.png)
+![Fastball by Count](../../chapters/07_count_strategy/figures/fig01_fastball_by_count.png)
 
 The color gradient tells the story: more balls = more fastballs.
 
 ### Figure 2: Pitcher's vs Hitter's Counts
 
-![Count Comparison](../chapters/07_count_strategy/figures/fig02_pitcher_vs_hitter_counts.png)
+![Count Comparison](../../chapters/07_count_strategy/figures/fig02_pitcher_vs_hitter_counts.png)
 
 A 17% swing in fastball usage between count types.
 
 ### Figure 3: Two-Strike Strategy
 
-![Two-Strike Strategy](../chapters/07_count_strategy/figures/fig03_two_strike_strategy.png)
+![Two-Strike Strategy](../../chapters/07_count_strategy/figures/fig03_two_strike_strategy.png)
 
 Breaking balls spike when pitchers can afford to chase.
 
 ### Figure 4: Evolution Over Time
 
-![Yearly Trends](../chapters/07_count_strategy/figures/fig04_yearly_trends.png)
+![Yearly Trends](../../chapters/07_count_strategy/figures/fig04_yearly_trends.png)
 
 First pitch fastballs declining, 3-0 fastballs increasing.
 

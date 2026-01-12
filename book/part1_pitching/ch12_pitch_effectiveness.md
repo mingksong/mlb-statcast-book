@@ -87,19 +87,19 @@ for pitch_type in pitch_types:
 
 ### Figure 1: wOBA by Category
 
-![wOBA by Category](../chapters/12_pitch_effectiveness/figures/fig01_woba_by_category.png)
+![wOBA by Category](../../chapters/12_pitch_effectiveness/figures/fig01_woba_by_category.png)
 
 Breaking balls consistently allow the lowest wOBA.
 
 ### Figure 2: Whiff Rate by Category
 
-![Whiff Rate](../chapters/12_pitch_effectiveness/figures/fig02_whiff_by_category.png)
+![Whiff Rate](../../chapters/12_pitch_effectiveness/figures/fig02_whiff_by_category.png)
 
 Fastball whiff rates are climbing as velocity increases.
 
 ### Figure 3: wOBA by Pitch Type
 
-![wOBA by Pitch](../chapters/12_pitch_effectiveness/figures/fig03_woba_by_pitch_type.png)
+![wOBA by Pitch](../../chapters/12_pitch_effectiveness/figures/fig03_woba_by_pitch_type.png)
 
 2015 vs 2025 comparison shows splitter's emergence.
 

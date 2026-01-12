@@ -104,19 +104,19 @@ for inning in range(1, 10):
 
 ### Figure 1: Velocity by Inning
 
-![Velocity by Inning](../chapters/08_fatigue/figures/fig01_velocity_by_inning.png)
+![Velocity by Inning](../../chapters/08_fatigue/figures/fig01_velocity_by_inning.png)
 
 The counterintuitive rise: velocity increases as innings progress.
 
 ### Figure 2: Spin Rate by Inning
 
-![Spin by Inning](../chapters/08_fatigue/figures/fig02_spin_by_inning.png)
+![Spin by Inning](../../chapters/08_fatigue/figures/fig02_spin_by_inning.png)
 
 Spin follows the same pattern—higher in late innings.
 
 ### Figure 3: Combined View
 
-![Combined](../chapters/08_fatigue/figures/fig03_velocity_spin_combined.png)
+![Combined](../../chapters/08_fatigue/figures/fig03_velocity_spin_combined.png)
 
 Both metrics rise together as relievers take over.
 

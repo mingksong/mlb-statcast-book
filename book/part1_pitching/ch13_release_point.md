@@ -86,25 +86,25 @@ Correlation: r=0.059 (p=0.010)—statistically significant but practically weak.
 
 ### Figure 1: Consistency Trend
 
-![Consistency Trend](../chapters/13_release_point/figures/fig01_consistency_trend.png)
+![Consistency Trend](../../chapters/13_release_point/figures/fig01_consistency_trend.png)
 
 Year-over-year improvement in release consistency.
 
 ### Figure 2: Release Height Decline
 
-![Release Height](../chapters/13_release_point/figures/fig02_release_height.png)
+![Release Height](../../chapters/13_release_point/figures/fig02_release_height.png)
 
 A clear downward trend in average release height.
 
 ### Figure 3: Consistency by Handedness
 
-![By Handedness](../chapters/13_release_point/figures/fig03_consistency_by_hand.png)
+![By Handedness](../../chapters/13_release_point/figures/fig03_consistency_by_hand.png)
 
 RHP and LHP show similar consistency levels.
 
 ### Figure 4: Consistency Quartiles
 
-![Quartiles](../chapters/13_release_point/figures/fig04_consistency_vs_woba.png)
+![Quartiles](../../chapters/13_release_point/figures/fig04_consistency_vs_woba.png)
 
 More consistent pitchers allow slightly lower wOBA.
 

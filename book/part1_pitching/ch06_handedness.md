@@ -110,19 +110,19 @@ Both groups are getting faster, but the gap persists.
 
 ### Figure 1: The Persistent Gap
 
-![Velocity by Handedness](../chapters/06_handedness/figures/fig01_velocity_by_handedness.png)
+![Velocity by Handedness](../../chapters/06_handedness/figures/fig01_velocity_by_handedness.png)
 
 Both curves rise together—the velocity arms race affects both handedness groups equally.
 
 ### Figure 2: Stable Representation
 
-![LHP Percentage](../chapters/06_handedness/figures/fig02_lhp_percentage_trend.png)
+![LHP Percentage](../../chapters/06_handedness/figures/fig02_lhp_percentage_trend.png)
 
 Despite the velocity disadvantage, left-handers maintain their ~27% share.
 
 ### Figure 3: The Changeup Advantage
 
-![Pitch Mix](../chapters/06_handedness/figures/fig03_pitch_mix_comparison.png)
+![Pitch Mix](../../chapters/06_handedness/figures/fig03_pitch_mix_comparison.png)
 
 Left-handers compensate for lower velocity with more off-speed pitches.
 

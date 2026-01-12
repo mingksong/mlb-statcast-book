@@ -73,19 +73,19 @@ for year in AVAILABLE_SEASONS:
 
 ### Figure 1: The Velocity Climb
 
-![Velocity Trend](../chapters/01_velocity_trend/figures/fig01_velocity_trend.png)
+![Velocity Trend](../../chapters/01_velocity_trend/figures/fig01_velocity_trend.png)
 
 The steady climb is clear: each year brings incrementally harder throwers to the mound.
 
 ### Figure 2: The New Normal
 
-![95+ Percentage](../chapters/01_velocity_trend/figures/fig02_95plus_percentage.png)
+![95+ Percentage](../../chapters/01_velocity_trend/figures/fig02_95plus_percentage.png)
 
 What was once elite (95+ mph) has become standard. The bar for "hard thrower" keeps rising.
 
 ### Figure 3: Distribution Shift
 
-![Distribution Comparison](../chapters/01_velocity_trend/figures/fig03_distribution_comparison.png)
+![Distribution Comparison](../../chapters/01_velocity_trend/figures/fig03_distribution_comparison.png)
 
 Comparing 2015 and 2025 velocity distributions shows the entire curve shifting right.
 

@@ -90,25 +90,25 @@ We compared the pre-clock era (2019-2022) to the clock era (2023-2025), excludin
 
 ### Figure 1: Pitches Per Game
 
-![Pitches Per Game](../chapters/14_pitch_clock/figures/fig01_pitches_per_game.png)
+![Pitches Per Game](../../chapters/14_pitch_clock/figures/fig01_pitches_per_game.png)
 
 The red line marks when the clock was introduced. No meaningful change.
 
 ### Figure 2: Effectiveness Metrics
 
-![Effectiveness](../chapters/14_pitch_clock/figures/fig02_effectiveness.png)
+![Effectiveness](../../chapters/14_pitch_clock/figures/fig02_effectiveness.png)
 
 wOBA and whiff rate remained stable across the transition.
 
 ### Figure 3: Pitch Mix
 
-![Pitch Mix](../chapters/14_pitch_clock/figures/fig03_pitch_mix.png)
+![Pitch Mix](../../chapters/14_pitch_clock/figures/fig03_pitch_mix.png)
 
 The breaking ball revolution continued uninterrupted.
 
 ### Figure 4: Velocity by Inning
 
-![Velocity by Inning](../chapters/14_pitch_clock/figures/fig04_velocity_by_inning.png)
+![Velocity by Inning](../../chapters/14_pitch_clock/figures/fig04_velocity_by_inning.png)
 
 Pre and post-clock velocity curves are nearly identical.
 

@@ -96,19 +96,19 @@ for year in AVAILABLE_SEASONS:
 
 ### Figure 1: Fastball Movement Trend
 
-![Fastball Movement Trend](../chapters/05_movement/figures/fig01_fastball_movement_trend.png)
+![Fastball Movement Trend](../../chapters/05_movement/figures/fig01_fastball_movement_trend.png)
 
 The flat regression lines confirm the lack of trend. Year-to-year variation exists, but no directional change emerges.
 
 ### Figure 2: Pitch Movement Profile
 
-![Pitch Movement Profile](../chapters/05_movement/figures/fig02_pitch_movement_profile.png)
+![Pitch Movement Profile](../../chapters/05_movement/figures/fig02_pitch_movement_profile.png)
 
 Each pitch type occupies a distinct region of the movement space, and these regions haven't shifted over the decade.
 
 ### Figure 3: Distribution Comparison (2015 vs 2025)
 
-![Distribution Comparison](../chapters/05_movement/figures/fig04_distribution_comparison.png)
+![Distribution Comparison](../../chapters/05_movement/figures/fig04_distribution_comparison.png)
 
 The 2015 and 2025 distributions nearly perfectly overlap—statistical proof of stability.
 

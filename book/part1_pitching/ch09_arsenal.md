@@ -70,25 +70,25 @@ The most common arsenal is 4 pitches, and the trend is toward more diversity.
 
 ### Figure 1: Arsenal Size Trend
 
-![Arsenal Trend](../chapters/09_arsenal/figures/fig01_arsenal_trend.png)
+![Arsenal Trend](../../chapters/09_arsenal/figures/fig01_arsenal_trend.png)
 
 A gradual but modest increase in arsenal diversity.
 
 ### Figure 2: Distribution Comparison
 
-![Arsenal Distribution](../chapters/09_arsenal/figures/fig02_arsenal_distribution.png)
+![Arsenal Distribution](../../chapters/09_arsenal/figures/fig02_arsenal_distribution.png)
 
 The shift toward larger arsenals is visible.
 
 ### Figure 3: Multi-Pitch Rise
 
-![Multi-Pitch Trend](../chapters/09_arsenal/figures/fig03_multipitch_trend.png)
+![Multi-Pitch Trend](../../chapters/09_arsenal/figures/fig03_multipitch_trend.png)
 
 More pitchers now carry 4+ pitch types.
 
 ### Figure 4: Pitch Popularity Shift
 
-![Pitch Popularity](../chapters/09_arsenal/figures/fig04_pitch_popularity.png)
+![Pitch Popularity](../../chapters/09_arsenal/figures/fig04_pitch_popularity.png)
 
 The sweeper's emergence and curveball's decline.
 
