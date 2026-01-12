@@ -1,0 +1,8 @@
+metric,value
+Inning 1 Velocity,93.41 mph
+Inning 9 Velocity,94.83 mph
+Total Velocity Decay (1→9),1.42 mph
+Velocity Decay per Inning,0.189 mph/inning
+Inning 1 Spin Rate,2266 rpm
+Inning 9 Spin Rate,2317 rpm
+Early vs Late Cohen's d,0.421

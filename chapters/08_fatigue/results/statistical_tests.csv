@@ -1,0 +1,11 @@
+test,metric,value,unit
+Velocity Decay,Slope,0.1889,mph/inning
+Velocity Decay,R-squared,0.6837,
+Velocity Decay,p-value,5.97e-03,
+Spin Change,Slope,6.11,rpm/inning
+Spin Change,R-squared,0.7476,
+Early vs Late,Early Mean (Inn 1-3),93.26,mph
+Early vs Late,Late Mean (Inn 7-9),94.37,mph
+Early vs Late,Difference,1.11,mph
+Early vs Late,Cohen's d,0.421,
+Early vs Late,p-value,0.00e+00,
