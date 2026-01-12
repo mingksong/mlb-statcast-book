@@ -8,333 +8,268 @@ Use after content organization and code extraction to generate the final report.
 
 Keywords: convert report, generate markdown, write chapter, final report
 
-## Purpose
+## Reference Style
 
-This skill combines:
-- Content plan (structure and narrative flow)
-- Extracted code blocks (executable, cleaned)
-- Actual results data (from CSV files)
+Based on: **Analyzing Baseball Data with R, 3rd Edition**
+Example: https://beanumber.github.io/abdwr3e/07-framing.html
 
-Into a publication-ready markdown chapter in ABDWR style.
+## ABDWR Style Core Principles
 
-## Input Requirements
+### 1. Code is REAL and EXECUTABLE
 
-1. **Content plan** from Content Organizer
-2. **Extracted code blocks** from Code Extractor
-3. **Results CSV files** with actual data values
-4. **Generated figures** (paths verified)
-
-## ABDWR Style Specification
-
-### Core Principles
-
-1. **Conversational Exploration**: Write as if discovering with the reader
-2. **Code-Narrative Integration**: Code blocks flow within the story
-3. **Show Results Inline**: Tables appear after code that generates them
-4. **Explain After Showing**: Code first, interpretation second
-
-### Writing Patterns
-
-**Opening Hook Pattern**:
-```markdown
-# Chapter Title
-
-[2-3 sentence hook that poses a question or surprising fact]
-
-In this chapter, we'll [verb: explore/analyze/examine] [topic] and [discovery goal].
-```
-
-**Getting Started Pattern**:
-```markdown
-## Getting Started
-
-Let's [action verb] [what we're doing]:
+Code blocks must be actual working code that produces results, not demonstrations:
 
 ```python
-[data loading code block]
+# WRONG - placeholder/demonstration style
+print("Loading data...")
+print(f"We have {n} pitches")
+
+# RIGHT - ABDWR style (executable, produces real output)
+sc_2024 = pd.read_parquet("data/statcast_2024.parquet")
+called = sc_2024[sc_2024['description'].isin(['called_strike', 'ball'])]
 ```
 
-With [N million/thousand] [records/pitches/etc.], we can [analysis capability].
-```
+### 2. Direct Language (No "Suppose" or "Let's")
 
-**Analysis Section Pattern**:
 ```markdown
-## [Analysis Topic]
+# WRONG
+Suppose we want to examine velocity trends. Let's load the data.
 
-[Transition sentence connecting to previous section]
+# RIGHT
+We examine velocity trends using Statcast data from 2015-2025.
+We start by reading the pitch-level data.
+```
+
+### 3. Skip Intermediate Output Display
+
+Do NOT show `.head()`, `print(df)`, or intermediate tibble outputs.
+Instead, describe findings narratively:
+
+```markdown
+# WRONG
+```python
+print(df.head())
+```
+   pitch_type  release_speed
+0  FF          94.2
+1  SL          85.1
+...
+
+# RIGHT
+The data contains pitch type and velocity for each pitch.
+Fastballs average 94.2 mph while sliders average 85.1 mph.
+```
+
+### 4. Code Flows Naturally
+
+Multi-step analysis shows each logical step with code, but skips intermediate output:
 
 ```python
-[calculation code block]
+# Step 1: Load and filter
+df = load_seasons(2015, 2025, columns=['game_year', 'pitch_type', 'release_speed'])
+fastballs = df[df['pitch_type'] == 'FF']
+
+# Step 2: Calculate yearly averages
+yearly_velocity = (
+    fastballs
+    .groupby('game_year')['release_speed']
+    .agg(['mean', 'std', 'count'])
+)
+yearly_velocity.columns = ['avg_velocity', 'std', 'n_pitches']
 ```
 
-| Column1 | Column2 | Column3 |
-|---------|---------|---------|
-| data    | data    | data    |
+### 5. Tables Come AFTER Code That Produces Them
 
-[Interpretation of results - 1-2 paragraphs]
-```
+Show the code, then show the output (as if executed):
 
-**Visualization Pattern**:
 ```markdown
-## [Figure Topic]
-
-[Setup sentence explaining what we'll visualize]
-
-![Description](../../chapters/XX_topic/figures/fig01_xxx.png)
-
-[Caption explaining key takeaways - what does this show?]
-```
-
-**Statistical Validation Pattern**:
-```markdown
-## Is This Real? Statistical Validation
-
-Let's confirm the [finding] with proper statistical tests:
+We calculate the average velocity by year:
 
 ```python
-[statistical test code block]
+yearly_velocity = fastballs.groupby('game_year')['release_speed'].mean()
 ```
 
-| Test | Value | Interpretation |
-|------|-------|----------------|
-| Metric | X.XX | [meaning] |
+|game_year|avg_velocity|
+|---------|------------|
+|2015     |92.8        |
+|2020     |94.1        |
+|2025     |94.8        |
 
-[Interpretation paragraph - what do these tests tell us?]
+The progression is clear—average velocity increased 2.0 mph over the decade.
 ```
 
-**Summary Pattern**:
+### 6. Figures Follow Their Code
+
 ```markdown
-## What We Learned
-
-Let's summarize what the data revealed:
-
-1. **[Finding 1 headline]**: [one-line summary]
-2. **[Finding 2 headline]**: [one-line summary]
-3. **[Finding 3 headline]**: [one-line summary]
-4. **[Finding 4 headline]**: [one-line summary]
-5. **[Finding 5 headline]**: [one-line summary]
-6. **[Finding 6 headline]**: [one-line summary]
-
-[Closing paragraph with broader implications]
-```
-
-**Try It Yourself Pattern**:
-```markdown
-## Try It Yourself
-
-The complete analysis code is available at:
-`github.com/mingksong/mlb-statcast-book/chapters/XX_topic/`
-
-Try modifying the code to explore:
-- [Exploration idea 1]
-- [Exploration idea 2]
-- [Exploration idea 3]
-
-```bash
-cd chapters/XX_topic
-python analysis.py
-```
-```
-
-## Conversion Process
-
-### Step 1: Read Actual Results
+We visualize this trend in Figure 2.1.
 
 ```python
-# Load results from CSV files
-import pandas as pd
-
-summary = pd.read_csv('chapters/XX_topic/results/summary.csv')
-stats = pd.read_csv('chapters/XX_topic/results/statistical_tests.csv')
+fig, ax = plt.subplots(figsize=(10, 6))
+ax.plot(yearly_velocity.index, yearly_velocity.values, 'o-')
+ax.set_xlabel('Year')
+ax.set_ylabel('Average Velocity (mph)')
+ax.set_title('Fastball Velocity Trend')
+plt.savefig('figures/fig01_velocity_trend.png', dpi=150)
 ```
 
-**Extract actual values** for use in narrative:
-- Key metrics (means, percentages)
-- Year-over-year changes
-- Statistical test results
-- Sample sizes
+![Fastball velocity has increased steadily from 2015 to 2025](../../chapters/02_velocity_trend/figures/fig01_velocity_trend.png)
 
-### Step 2: Generate Tables from Data
-
-Convert CSV data to markdown tables:
-
-```python
-# From CSV
-# year,avg_velocity,std
-# 2015,92.8,4.2
-# 2025,94.8,4.1
-
-# To Markdown
-| Year | Avg Velocity | Std Dev |
-|------|--------------|---------|
-| 2015 | 92.8 mph     | 4.2     |
-| 2025 | 94.8 mph     | 4.1     |
+Note that velocity increased in nearly every season, with the steepest gains occurring between 2017 and 2019.
 ```
 
-### Step 3: Insert Code Blocks
-
-Place extracted code at designated content plan locations:
+## Chapter Structure Template
 
 ```markdown
-## Getting Started
+# Chapter N: Title
 
-Let's analyze fastball velocity trends:
+[Opening paragraph - establishes context and importance. NO code here.]
+
+[Second paragraph - what we will explore in this chapter.]
+
+## Getting the Data
+
+We begin by reading the Statcast data for [years].
 
 ```python
 from statcast_analysis import load_seasons
 
 df = load_seasons(2015, 2025, columns=[
-    'game_year', 'pitch_type', 'release_speed'
+    'game_year', 'pitch_type', 'release_speed', 'release_spin_rate'
 ])
+```
 
+We focus on [specific subset], which we obtain by filtering:
+
+```python
 fastballs = df[df['pitch_type'] == 'FF']
-print(f"Fastball pitches analyzed: {len(fastballs):,}")
 ```
 
-With over 2.5 million fastballs tracked, we can trace velocity evolution precisely.
-```
+## [Analysis Section Title]
 
-### Step 4: Write Narrative Connectors
-
-**Transition phrases** (use sparingly):
-- "Suppose we want to see..."
-- "Let's examine..."
-- "The data reveals..."
-- "Looking at the breakdown..."
-- "What drives this change?"
-
-**Avoid**:
-- "As you can see..."
-- "Obviously..."
-- "It's clear that..."
-- "Now let's move on to..."
-
-### Step 5: Format Statistical Results
-
-Convert statistical test output to interpretation:
+[Brief statement of what we analyze.]
 
 ```python
-# From statistical_tests.csv
-# metric,value
-# slope,0.18
-# r_squared,0.94
-# p_value,0.00001
-# cohens_d,1.35
-
-# To narrative
-The trend is statistically robust:
-
-| Metric | Value | Interpretation |
-|--------|-------|----------------|
-| Slope | +0.18 mph/year | Consistent annual increase |
-| R² | 0.94 | Explains 94% of variance |
-| p-value | <0.001 | Highly significant |
-| Cohen's d | 1.35 | Very large effect size |
-
-The R² of 0.94 indicates an almost perfectly linear trend. The effect size (d=1.35) is very large, confirming that the velocity increase is not just statistically significant but practically meaningful.
+[Analysis code - real, executable]
 ```
 
-## Output Format
+[Table output from the code above]
 
-### File Location
+[Interpretation paragraph - what does this tell us?]
 
+## [Visualization Section]
+
+We plot [description] in Figure N.M.
+
+```python
+[Plotting code - real, executable]
 ```
-book/partX_category/chXX_topic.md
+
+![Caption](../../chapters/XX_topic/figures/figNN_name.png)
+
+[Post-figure interpretation - what patterns do we observe?]
+
+## Statistical Validation
+
+[Brief setup for statistical tests]
+
+```python
+from scipy import stats
+
+slope, intercept, r, p, se = stats.linregress(years, velocities)
 ```
 
-### Required Sections
+|Metric|Value|
+|------|-----|
+|Slope|+0.18 mph/year|
+|R²|0.94|
+|p-value|<0.001|
 
-1. **Title** (# Chapter N: Title)
-2. **Opening Hook** (2-3 paragraphs, no code)
-3. **Getting Started** (data loading code + context)
-4. **Main Analysis** (2-4 sections with code and tables)
-5. **Visualization** (figures with captions)
-6. **Statistical Validation** (tests with interpretation)
-7. **What We Learned** (6 bullet points)
-8. **Try It Yourself** (execution instructions)
+The R² of 0.94 indicates [interpretation]. The trend is statistically significant (p < 0.001).
 
-### Image Path Format
+## Summary
 
-**CRITICAL**: Book chapters are in `book/partX/` so images need TWO parent traversals:
+[2-3 paragraph summary of findings]
+
+## Further Reading
+
+- [Reference 1]
+- [Reference 2]
+
+## Exercises
+
+1. [Exercise question]
+2. [Exercise question]
+3. [Exercise question]
+```
+
+## Code Block Rules
+
+### MUST Include
+- Import statements (at first use)
+- Variable assignments
+- The actual calculation/transformation
+- Plot saving commands
+
+### MUST Exclude
+- `print("Loading...")` progress messages
+- `df.head()` debugging
+- `time.time()` timing
+- Comments like `# Debug` or `# TODO`
+- Try/except with pass
+
+### Format Guidelines
+- Use meaningful variable names
+- Chain operations with `.pipe()` or multiple lines
+- Include comments only for non-obvious operations
+- Keep blocks focused (one logical operation per block)
+
+## Table Output Format
+
+Tables appear as if they are output from code execution:
 
 ```markdown
-![Figure](../../chapters/XX_topic/figures/fig01_xxx.png)
+|column1|column2|column3|
+|-------|-------|-------|
+|value1 |value2 |value3 |
+|value4 |value5 |value6 |
 ```
 
-NOT `../chapters/` (wrong - only one level up)
+- Left-align text, right-align numbers
+- Use actual values from results CSVs
+- Include units where appropriate
 
-## Quality Checks
+## Figure Captions
 
-Before finalizing:
+Captions describe what the figure shows:
 
-- [ ] All numeric values come from actual results files
-- [ ] No placeholder text (e.g., "[X]" or "TBD")
-- [ ] All code blocks are syntactically valid
+```markdown
+![Fastball velocity increased steadily from 92.8 mph (2015) to 94.8 mph (2025)](path/to/figure.png)
+```
+
+## Narrative Voice
+
+| Use | Avoid |
+|-----|-------|
+| "We examine..." | "Let's examine..." |
+| "We start by..." | "Suppose we want to..." |
+| "Note that..." | "As you can see..." |
+| "The data show..." | "Obviously..." |
+| "One criticism is..." | "It's clear that..." |
+
+## Transitions Between Sections
+
+- "Next, we examine..."
+- "To prepare these data for modeling, we..."
+- "One criticism of this approach is that..."
+- "We can extend this analysis by..."
+
+## Quality Checklist
+
+- [ ] All code blocks are executable Python
+- [ ] No `print()` statements except for final results
+- [ ] No `.head()` or debugging output shown
+- [ ] Tables follow immediately after code that generates them
+- [ ] Figures follow immediately after plotting code
+- [ ] Direct language (no "suppose", "let's")
+- [ ] Interpretations follow every code/table/figure
 - [ ] Image paths use `../../chapters/` format
-- [ ] Tables have consistent column alignment
-- [ ] Statistical interpretations match values
-- [ ] No orphaned references to non-existent sections
-- [ ] Summary bullets match actual findings
-- [ ] Execution instructions are accurate
-
-## Example Conversion
-
-### Input
-
-**Content Plan Section**:
-```yaml
-section: main_analysis_1
-purpose: "Show velocity by year"
-code_block_id: analysis_calc
-data_source: results/velocity_by_year.csv
-figure: fig01_velocity_trend.png
-```
-
-**Extracted Code**:
-```python
-# Group by year and calculate mean velocity
-yearly_velocity = fastballs.groupby('game_year')['release_speed'].mean()
-print(yearly_velocity.round(2))
-```
-
-**Results Data** (velocity_by_year.csv):
-```
-game_year,avg_velocity
-2015,92.8
-2020,94.1
-2025,94.8
-```
-
-### Output
-
-```markdown
-## Velocity by Year
-
-Let's calculate the average fastball velocity for each season:
-
-```python
-# Group by year and calculate mean velocity
-yearly_velocity = fastballs.groupby('game_year')['release_speed'].mean()
-print(yearly_velocity.round(2))
-```
-
-| Year | Avg Velocity |
-|------|--------------|
-| 2015 | 92.8 mph |
-| 2020 | 94.1 mph |
-| 2025 | 94.8 mph |
-
-![Velocity Trend](../../chapters/02_velocity_trend/figures/fig01_velocity_trend.png)
-
-The progression is unmistakable. Average fastball velocity climbed from 92.8 mph in 2015 to 94.8 mph in 2025—a 2.0 mph increase over a decade. This represents the most significant velocity shift in baseball history.
-```
-
-## Final Validation
-
-Run these checks before completing:
-
-1. **Read the report as a reader would** - does it flow?
-2. **Execute all code blocks** - do they work?
-3. **Verify all figures exist** at referenced paths
-4. **Cross-check all numbers** against source CSVs
-5. **Check markdown rendering** - tables, code blocks, images

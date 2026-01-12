@@ -8,12 +8,17 @@ Use after content organization to extract code blocks for report insertion.
 
 Keywords: extract code, get code blocks, match code, executable code
 
+## Reference Style
+
+Based on: **Analyzing Baseball Data with R, 3rd Edition**
+Example: https://beanumber.github.io/abdwr3e/07-framing.html
+
 ## Purpose
 
 This skill parses analysis.py and extracts ONLY code that:
-- Is relevant to the narrative
-- Can be executed independently or understood in context
-- Produces meaningful output (data, figures, statistics)
+- Is REAL and EXECUTABLE (not placeholder demonstrations)
+- Produces actual results (data transformations, calculations, figures)
+- Follows ABDWR style (no print debugging, no intermediate output)
 
 ## Input Requirements
 
