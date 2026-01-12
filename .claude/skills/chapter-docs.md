@@ -85,6 +85,14 @@ python analysis.py
 
 ### Tier 2: Book Chapter (`book/partX_category/chXX_topic.md`)
 
+> **IMPORTANT: Image Path Format**
+>
+> Book chapters are in `book/partX_category/` so image paths must use `../../chapters/`:
+> ```markdown
+> ![Figure](../../chapters/XX_topic/figures/fig01_xxx.png)
+> ```
+> NOT `../chapters/` - that's WRONG!
+
 **Purpose**: Narrative content for readers, suitable for PDF publication.
 
 **Length**: 5-10 pages

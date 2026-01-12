@@ -296,6 +296,11 @@ Include:
 
 Location: `book/partX_category/chXX_topic.md`
 
+> **IMPORTANT: Image paths must use `../../chapters/` (two levels up!)**
+> ```markdown
+> ![Figure](../../chapters/XX_topic/figures/fig01_xxx.png)
+> ```
+
 Structure:
 ```markdown
 # [Chapter Title]
