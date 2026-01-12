@@ -1,0 +1,3 @@
+metric,value_2015,value_2025,change,trend_slope,r_squared,p_value,interpretation
+Release Consistency (3D StdDev),0.3046,0.3122,0.0075,-0.00506/year,0.131,0.2732,No significant trend
+FB-Breaking Release Separation,0.1758,0.2031,0.0274,-0.00951/year,0.082,0.3921,No significant trend
