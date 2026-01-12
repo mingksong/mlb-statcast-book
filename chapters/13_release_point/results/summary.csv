@@ -1,0 +1,4 @@
+metric,value_2015,value_2025,change,interpretation
+3D Release Consistency (StdDev),0.3066,0.3140,0.0074,Declined (higher)
+Average Release Height (ft),5.977,5.749,-0.228,Lower release point
+Consistency-wOBA Correlation,N/A,r=0.059,N/A,More consistent = lower wOBA
