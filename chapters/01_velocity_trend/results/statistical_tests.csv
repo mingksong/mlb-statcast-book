@@ -1,0 +1,16 @@
+test,metric,value,unit
+Trend Analysis,Slope,0.1438,mph/year
+Trend Analysis,Slope 95% CI Lower,0.1132,mph/year
+Trend Analysis,Slope 95% CI Upper,0.1743,mph/year
+Trend Analysis,R-squared,0.9045,
+Trend Analysis,R-squared Interpretation,strong,
+Trend Analysis,p-value,6.92e-06,
+Trend Analysis,p-value Interpretation,highly significant,
+Period Comparison,Early Period Mean,93.19,mph
+Period Comparison,Late Period Mean,94.32,mph
+Period Comparison,Difference,1.12,mph
+Period Comparison,Difference 95% CI,"[1.12, 1.13]",mph
+Period Comparison,t-statistic,-252.98,
+Period Comparison,p-value,0.00e+00,
+Period Comparison,Cohen's d,0.422,
+Period Comparison,Effect Size Interpretation,small,

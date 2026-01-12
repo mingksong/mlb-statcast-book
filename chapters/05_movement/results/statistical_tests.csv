@@ -1,0 +1,29 @@
+test,metric,value,unit
+Trend (Horizontal Break),Slope,-0.0032,in/year
+Trend (Horizontal Break),Slope 95% CI,"[-0.0095, 0.0032]",in/year
+Trend (Horizontal Break),R-squared,0.0944,
+Trend (Horizontal Break),R² Interpretation,weak,
+Trend (Horizontal Break),p-value,3.58e-01,
+Trend (Horizontal Break),p-value Interpretation,not significant,
+Trend (Vertical Break),Slope,-0.0027,in/year
+Trend (Vertical Break),Slope 95% CI,"[-0.0093, 0.0039]",in/year
+Trend (Vertical Break),R-squared,0.0649,
+Trend (Vertical Break),R² Interpretation,weak,
+Trend (Vertical Break),p-value,4.50e-01,
+Trend (Vertical Break),p-value Interpretation,not significant,
+Period Comparison (Horizontal Break),Early Period Mean,-0.25,in
+Period Comparison (Horizontal Break),Late Period Mean,-0.28,in
+Period Comparison (Horizontal Break),Difference,-0.02,in
+Period Comparison (Horizontal Break),Difference 95% CI,"[-0.03, -0.02]",in
+Period Comparison (Horizontal Break),t-statistic,21.35,
+Period Comparison (Horizontal Break),p-value,3.64e-101,
+Period Comparison (Horizontal Break),Cohen's d,-0.036,
+Period Comparison (Horizontal Break),Effect Interpretation,negligible,
+Period Comparison (Vertical Break),Early Period Mean,1.36,in
+Period Comparison (Vertical Break),Late Period Mean,1.31,in
+Period Comparison (Vertical Break),Difference,-0.04,in
+Period Comparison (Vertical Break),Difference 95% CI,"[-0.04, -0.04]",in
+Period Comparison (Vertical Break),t-statistic,91.41,
+Period Comparison (Vertical Break),p-value,0.00e+00,
+Period Comparison (Vertical Break),Cohen's d,-0.153,
+Period Comparison (Vertical Break),Effect Interpretation,negligible,

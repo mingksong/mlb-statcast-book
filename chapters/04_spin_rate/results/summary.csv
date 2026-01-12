@@ -1,0 +1,11 @@
+metric,value
+2015 Average Spin Rate,2239 rpm
+2025 Average Spin Rate,2323 rpm
+10-Year Change,+84 rpm
+2015 2500+ Percentage,6.1%
+2025 2500+ Percentage,13.2%
+Trend Slope,5.58 rpm/year
+Trend R-squared,0.6386 (strong)
+Trend p-value,3.17e-03 (very significant)
+Cohen's d (Early vs Late),0.260
+Effect Size,small

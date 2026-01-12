@@ -1,0 +1,17 @@
+test,metric,value,unit
+Velocity Comparison,LHP Mean,92.62,mph
+Velocity Comparison,RHP Mean,94.01,mph
+Velocity Comparison,Difference (RHP-LHP),+1.39,mph
+Velocity Comparison,t-statistic,-375.10,
+Velocity Comparison,p-value,0.00e+00,
+Velocity Comparison,Cohen's d,0.532,
+Velocity Comparison,Effect Interpretation,medium,
+Spin Rate Comparison,LHP Mean,2247,rpm
+Spin Rate Comparison,RHP Mean,2289,rpm
+Spin Rate Comparison,Difference (RHP-LHP),+42,rpm
+Spin Rate Comparison,Cohen's d,0.237,
+Spin Rate Comparison,Effect Interpretation,small,
+LHP Ratio Trend,Slope,0.0533,%/year
+LHP Ratio Trend,R-squared,0.0255,
+LHP Ratio Trend,R² Interpretation,weak,
+LHP Ratio Trend,p-value,6.39e-01,

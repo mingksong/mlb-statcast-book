@@ -1,6 +1,11 @@
 metric,value
-2015 Average Velocity,93.1 mph
-2025 Average Velocity,94.5 mph
-10-Year Change,+1.4 mph
+2015 Average Velocity,93.12 mph
+2025 Average Velocity,94.49 mph
+10-Year Change,+1.37 mph
 2015 95+ Percentage,26.1%
 2025 95+ Percentage,43.1%
+Trend Slope,0.1438 mph/year
+Trend R-squared,0.9045 (strong)
+Trend p-value,6.92e-06 (highly significant)
+Cohen's d (Early vs Late),0.422
+Effect Size,small

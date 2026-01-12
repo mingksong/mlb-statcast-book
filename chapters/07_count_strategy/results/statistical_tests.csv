@@ -1,0 +1,12 @@
+test,metric,value,unit
+Pitcher vs Hitter Count,Pitcher FB%,50.4,%
+Pitcher vs Hitter Count,Hitter FB%,67.4,%
+Pitcher vs Hitter Count,Difference,+17.0,%
+Pitcher vs Hitter Count,Chi-square,109187.32,
+Pitcher vs Hitter Count,p-value,0.00e+00,
+Pitcher vs Hitter Count,Cramer's V,0.1702,
+Two-Strike Strategy,Breaking% (2 strikes),33.6,%
+Two-Strike Strategy,Breaking% (0-1 strikes),26.0,%
+Two-Strike Strategy,Breaking% Increase,+7.6,%
+First Pitch Trend,Slope,-0.769,%/year
+First Pitch Trend,R-squared,0.8633,

@@ -1,0 +1,16 @@
+test,metric,value,unit
+Trend Analysis,Slope,5.58,rpm/year
+Trend Analysis,Slope 95% CI Lower,2.84,rpm/year
+Trend Analysis,Slope 95% CI Upper,8.32,rpm/year
+Trend Analysis,R-squared,0.6386,
+Trend Analysis,R-squared Interpretation,strong,
+Trend Analysis,p-value,3.17e-03,
+Trend Analysis,p-value Interpretation,very significant,
+Period Comparison,Early Period Mean,2255,rpm
+Period Comparison,Late Period Mean,2301,rpm
+Period Comparison,Difference,46,rpm
+Period Comparison,Difference 95% CI,"[45, 46]",rpm
+Period Comparison,t-statistic,-154.66,
+Period Comparison,p-value,0.00e+00,
+Period Comparison,Cohen's d,0.260,
+Period Comparison,Effect Size Interpretation,small,

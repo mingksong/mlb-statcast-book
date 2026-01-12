@@ -1,0 +1,14 @@
+metric,value
+2015 Horizontal Break (FF),-0.23 in
+2025 Horizontal Break (FF),-0.28 in
+Horizontal Break Change,-0.05 in
+2015 Vertical Break (FF),+1.33 in
+2025 Vertical Break (FF),+1.32 in
+Vertical Break Change,-0.01 in
+H-Break Trend Slope,-0.0032 in/year
+H-Break R-squared,0.0944 (weak)
+V-Break Trend Slope,-0.0027 in/year
+V-Break R-squared,0.0649 (weak)
+Cohen's d (H-Break),-0.036 (negligible)
+Cohen's d (V-Break),-0.153 (negligible)
+Total Pitches Analyzed,"7,396,581"
