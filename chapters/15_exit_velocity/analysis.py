@@ -17,13 +17,16 @@ import numpy as np
 from scipy import stats
 import matplotlib.pyplot as plt
 import sys
-sys.path.insert(0, '/Users/mksong/Documents/mlb-statcast-book')
+from pathlib import Path
 
-from src.statcast_analysis import load_seasons
+PROJECT_ROOT = Path(__file__).parent.parent.parent
+sys.path.insert(0, str(PROJECT_ROOT / "src"))
+
+from statcast_analysis import load_seasons
 
 # Configuration
-FIGURES_DIR = '/Users/mksong/Documents/mlb-statcast-book/chapters/15_exit_velocity/figures'
-RESULTS_DIR = '/Users/mksong/Documents/mlb-statcast-book/chapters/15_exit_velocity/results'
+FIGURES_DIR = 'figures'
+RESULTS_DIR = 'results'
 
 
 def load_data():

@@ -1,200 +1,279 @@
 # Chapter 4: Spin Rate Trends
 
-What if pitchers could add 100 rpm to their fastballs overnight? It sounds impossible—until you look at what happened in baseball between 2015 and 2021. The spin rate story is really two stories: the rise of an analytical obsession, and baseball's dramatic response to its dark side.
+In 2015, the average four-seam fastball spun at 2,239 rpm. By 2025, that number had climbed to 2,323 rpm—an increase of 84 rpm over the decade. But the spin rate story is not a simple upward march. It includes a controversial peak in 2020, a dramatic enforcement-driven crash in 2021, and a remarkable recovery through legitimate innovation.
 
-In this chapter, we'll trace the evolution of spin rate from curiosity to controversy, examining how pitchers added nearly 85 rpm to their fastballs over a decade—sometimes through innovation, sometimes through... other means.
+This chapter traces the evolution of pitch spin rates from 2015 to 2025, examining how technology, foreign substances, and rule enforcement shaped one of baseball's most scrutinized metrics.
 
-## Getting Started
+## Getting the Data
 
-Let's begin by loading our fastball data and examining how spin rates have changed:
-
-```python
-from statcast_analysis import load_seasons
-
-df = load_seasons(2015, 2025, columns=['game_year', 'pitch_type', 'release_spin_rate'])
-
-# Filter to 4-seam fastballs with valid spin data
-ff = df[(df['pitch_type'] == 'FF') &
-        (df['release_spin_rate'] > 0) &
-        (df['release_spin_rate'] < 4000)]
-print(f"Total fastballs analyzed: {len(ff):,}")
-```
-
-With over 2.5 million four-seam fastballs in our dataset, we can track exactly how spin rates evolved across the Statcast era.
-
-## The Spin Revolution
-
-Suppose we want to see how average fastball spin changed year by year. We can calculate the mean and also track the percentage of "high-spin" fastballs at 2500+ rpm:
+We begin by loading Statcast pitch data and filtering to four-seam fastballs with valid spin rates.
 
 ```python
-yearly_stats = ff.groupby('game_year')['release_spin_rate'].agg(['mean', 'count'])
-yearly_stats['high_spin_pct'] = ff.groupby('game_year').apply(
-    lambda x: (x['release_spin_rate'] >= 2500).mean() * 100
-)
-print(yearly_stats.round(0))
+import pandas as pd
+import numpy as np
+from scipy import stats
+from statcast_analysis import load_season, AVAILABLE_SEASONS
+
+results = []
+for year in AVAILABLE_SEASONS:
+    df = load_season(year, columns=['pitch_type', 'release_spin_rate'])
+
+    # Filter to 4-seam fastballs with valid spin data
+    ff = df[(df['pitch_type'] == 'FF') &
+            (df['release_spin_rate'].notna()) &
+            (df['release_spin_rate'] > 0) &
+            (df['release_spin_rate'] < 4000)]['release_spin_rate']
+
+    n = len(ff)
+    mean = ff.mean()
+    std = ff.std()
+    se = std / np.sqrt(n)
+
+    results.append({
+        'year': year,
+        'count': n,
+        'mean': mean,
+        'std': std,
+        'ci_lower': mean - 1.96 * se,
+        'ci_upper': mean + 1.96 * se,
+        'pct_2500plus': (ff >= 2500).mean() * 100,
+    })
+
+spin_df = pd.DataFrame(results)
 ```
 
-The results reveal a striking pattern:
+The data contains over 2.5 million four-seam fastballs across 11 seasons.
 
-| Year | Avg Spin (rpm) | 2500+ % | n pitches |
-|------|----------------|---------|-----------|
-| 2015 | 2,239 | 6.1% | 242,490 |
-| 2017 | 2,260 | 7.6% | 248,888 |
-| 2019 | 2,289 | 11.2% | 263,358 |
-| 2020 | **2,304** | **15.0%** | 91,412 |
-| 2021 | 2,274 | 10.0% | 251,219 |
-| 2023 | 2,283 | 9.3% | 229,208 |
-| 2025 | 2,323 | 13.2% | 225,485 |
+## Spin Rate by Year
 
-![Spin Rate Trend](../../chapters/04_spin_rate/figures/fig01_spin_rate_trend.png)
-
-Look at that 2020 peak! Average spin jumped to 2,304 rpm, and 15% of all fastballs exceeded 2,500 rpm. Then something dramatic happened in 2021—spin dropped by 30 rpm almost overnight.
-
-## The Sticky Substance Saga
-
-But wait—why would spin rates suddenly drop in 2021? The answer lies in one of baseball's most controversial episodes.
-
-In June 2021, MLB began strictly enforcing foreign substance rules. The "sticky stuff" era was over.
+We calculate the average spin rate for each season.
 
 ```python
-# Calculate the 2020-2021 drop
-spin_2020 = ff[ff['game_year'] == 2020]['release_spin_rate'].mean()
-spin_2021 = ff[ff['game_year'] == 2021]['release_spin_rate'].mean()
-drop = spin_2020 - spin_2021
-print(f"2020 average: {spin_2020:.0f} rpm")
-print(f"2021 average: {spin_2021:.0f} rpm")
-print(f"Drop: {drop:.0f} rpm")
+spin_df[['year', 'mean', 'std', 'count', 'pct_2500plus']]
 ```
 
-The drop from 2,304 to 2,274 rpm—30 rpm in a single season—was the fingerprint of the crackdown. Pitchers who had relied on spider tack, sunscreen-rosin mixtures, and other grip enhancers suddenly had to adapt.
+|year|mean|std|count|pct_2500plus|
+|----|----|----|-----|------------|
+|2015|2239|200|242,490|6.1%|
+|2016|2267|179|252,139|8.3%|
+|2017|2260|171|248,888|7.6%|
+|2018|2266|169|252,958|8.2%|
+|2019|2289|175|263,358|11.2%|
+|2020|2304|218|91,412|15.0%|
+|2021|2274|182|251,219|10.0%|
+|2022|2275|169|234,754|7.8%|
+|2023|2283|166|229,208|9.3%|
+|2024|2298|167|224,541|10.9%|
+|2025|2323|162|225,485|13.2%|
 
-| Period | Events |
-|--------|--------|
-| 2015-2018 | Baseline spin rates (~2,260 rpm) |
-| 2019-2020 | "Sticky stuff" becomes widespread |
-| June 2021 | MLB announces enforcement |
-| 2021-2022 | Immediate drop, adjustment period |
-| 2023-2025 | Recovery through legal innovation |
+The data reveals a complex pattern. Spin rates increased steadily from 2015-2020, peaked dramatically in 2020 (2,304 rpm), dropped sharply in 2021 (2,274 rpm), and then resumed climbing to reach 2,323 rpm by 2025.
 
-## The Remarkable Recovery
+## Visualizing the Trend
 
-Here's the surprising part of the story: by 2025, spin rates had not only recovered—they exceeded pre-crackdown levels. How did pitchers add spin without foreign substances?
-
-```python
-# Compare early era to late era
-early = ff[ff['game_year'].isin([2015, 2016, 2017])]['release_spin_rate'].mean()
-late = ff[ff['game_year'].isin([2023, 2024, 2025])]['release_spin_rate'].mean()
-print(f"Early era (2015-17): {early:.0f} rpm")
-print(f"Late era (2023-25): {late:.0f} rpm")
-print(f"Difference: {late - early:.0f} rpm")
-```
-
-The answer involves several factors:
-
-1. **Pitch design technology**: Software helps pitchers optimize seam orientation for maximum spin efficiency
-2. **Legal grip products**: Approved substances help with moisture control
-3. **Training methods**: Weighted ball programs and spin-efficiency drills
-4. **Player selection**: Teams now specifically seek high-spin arms in scouting and development
-
-The game found legal paths to the same destination.
-
-![High-Spin Percentage](../../chapters/04_spin_rate/figures/fig02_2500plus_percentage.png)
-
-## The Distribution Shift
-
-Let's look at how the entire distribution of fastball spin has shifted:
+We plot the spin rate trend with 95% confidence intervals in Figure 4.1.
 
 ```python
 import matplotlib.pyplot as plt
 
-# Compare 2015 vs 2025 distributions
-spin_2015 = ff[ff['game_year'] == 2015]['release_spin_rate']
-spin_2025 = ff[ff['game_year'] == 2025]['release_spin_rate']
+fig, ax = plt.subplots(figsize=(10, 6))
 
-print(f"2015: median={spin_2015.median():.0f}, p10={spin_2015.quantile(0.1):.0f}, p90={spin_2015.quantile(0.9):.0f}")
-print(f"2025: median={spin_2025.median():.0f}, p10={spin_2025.quantile(0.1):.0f}, p90={spin_2025.quantile(0.9):.0f}")
+ax.plot(spin_df['year'], spin_df['mean'], 'o-', linewidth=2, markersize=8,
+        color='#1f77b4', label='Mean spin rate')
+ax.fill_between(spin_df['year'], spin_df['ci_lower'], spin_df['ci_upper'],
+                alpha=0.3, color='#1f77b4', label='95% CI')
+
+# Add regression line
+slope, intercept, r, p, se = stats.linregress(spin_df['year'], spin_df['mean'])
+ax.plot(spin_df['year'], intercept + slope * spin_df['year'], '--',
+        color='red', linewidth=2, label=f'Trend (R²={r**2:.3f})')
+
+ax.set_xlabel('Year', fontsize=12)
+ax.set_ylabel('Average 4-Seam Fastball Spin Rate (rpm)', fontsize=12)
+ax.set_title('Spin Rate Trends: 4-Seam Fastball (2015-2025)', fontsize=14)
+ax.legend(loc='best')
+plt.tight_layout()
+plt.savefig('figures/fig01_spin_rate_trend.png', dpi=150)
 ```
 
-| Percentile | 2015 | 2025 | Shift |
-|------------|------|------|-------|
-| 10th | 2,023 rpm | 2,120 rpm | +97 rpm |
-| Median | 2,253 rpm | 2,324 rpm | +71 rpm |
-| 90th | 2,459 rpm | 2,527 rpm | +68 rpm |
+![Average four-seam fastball spin rate increased from 2239 rpm (2015) to 2323 rpm (2025), with a notable peak in 2020](../../chapters/04_spin_rate/figures/fig01_spin_rate_trend.png)
 
-![Distribution Comparison](../../chapters/04_spin_rate/figures/fig04_distribution_comparison.png)
+The 2020 peak and 2021 drop are clearly visible. This pattern corresponds to MLB's enforcement of foreign substance rules in June 2021—the so-called "sticky stuff" crackdown.
 
-The entire distribution has shifted right. Even the floor has risen—the 10th percentile gained nearly 100 rpm. Low-spin fastballs are becoming increasingly rare in modern baseball.
+## The Rise of High-Spin Fastballs
 
-## Is This Real? Statistical Validation
-
-Before drawing conclusions, we should ask: Is this trend statistically significant, or just random variation?
+We examine the percentage of fastballs exceeding 2,500 rpm in Figure 4.2.
 
 ```python
-from scipy import stats
-import numpy as np
+fig, ax = plt.subplots(figsize=(10, 6))
 
-years = np.array(yearly_stats.index, dtype=float)
-spin_means = np.array(yearly_stats['mean'], dtype=float)
+ax.bar(spin_df['year'], spin_df['pct_2500plus'], color='#ff7f0e',
+       edgecolor='black', linewidth=0.5)
 
-slope, intercept, r, p, se = stats.linregress(years, spin_means)
-print(f"Trend: {slope:.2f} rpm per year")
-print(f"R² = {r**2:.3f}")
-print(f"p-value = {p:.2e}")
-print(f"95% CI for slope: [{slope - 1.96*se:.2f}, {slope + 1.96*se:.2f}]")
+ax.set_xlabel('Year', fontsize=12)
+ax.set_ylabel('Percentage of 4-Seamers at 2500+ rpm', fontsize=12)
+ax.set_title('High Spin Fastballs: 2500+ rpm', fontsize=14)
+
+for _, row in spin_df.iterrows():
+    ax.text(row['year'], row['pct_2500plus'] + 0.5, f"{row['pct_2500plus']:.0f}%",
+            ha='center', fontsize=9)
+
+plt.tight_layout()
+plt.savefig('figures/fig02_2500plus_percentage.png', dpi=150)
 ```
 
-The results:
+![The percentage of high-spin fastballs peaked at 15% in 2020, dropped to 7.8% in 2022, then recovered to 13.2% by 2025](../../chapters/04_spin_rate/figures/fig02_2500plus_percentage.png)
 
-| Statistic | Value | Interpretation |
-|-----------|-------|----------------|
-| Slope | +5.58 rpm/year | Significant upward trend |
-| 95% CI | [2.84, 8.32] | Excludes zero |
-| R² | 0.639 | Strong fit |
-| p-value | 0.003 | Very significant |
+In 2015, only 6.1% of fastballs exceeded 2,500 rpm. By 2020, that share had surged to 15.0%—more than doubling. After the crackdown, the percentage fell to 7.8% in 2022 before recovering to 13.2% by 2025.
 
-With a slope of **+5.58 rpm per year** and a p-value of 0.003, this is a highly significant trend. Spin rates are genuinely increasing, not just fluctuating.
+## The Sticky Substance Era
 
-What about the practical effect size?
+The 2020 peak warrants closer examination. The COVID-shortened season coincided with widespread use of grip-enhancing substances—spider tack, sunscreen-rosin mixtures, and other foreign substances that could add 200+ rpm to a pitch.
 
 ```python
-# Cohen's d for early vs late period
-def cohens_d(group1, group2):
-    n1, n2 = len(group1), len(group2)
-    var1, var2 = group1.var(), group2.var()
-    pooled_std = np.sqrt(((n1-1)*var1 + (n2-1)*var2) / (n1+n2-2))
-    return (group2.mean() - group1.mean()) / pooled_std
-
-early_spins = ff[ff['game_year'].isin([2015, 2016, 2017])]['release_spin_rate']
-late_spins = ff[ff['game_year'].isin([2023, 2024, 2025])]['release_spin_rate']
-
-d = cohens_d(early_spins, late_spins)
-print(f"Cohen's d = {d:.3f} (small effect)")
+# Calculate the 2020-2021 drop
+spin_2020 = spin_df[spin_df['year'] == 2020]['mean'].values[0]
+spin_2021 = spin_df[spin_df['year'] == 2021]['mean'].values[0]
+drop = spin_2020 - spin_2021
 ```
 
-Cohen's d of **0.260** indicates a small effect size. But here's the thing: in baseball, small statistical effects can have meaningful practical impacts. An 84 rpm increase translates to measurably different pitch movement—and the difference between a fly out and a swing-and-miss.
+|Metric|Value|
+|------|-----|
+|2020 Mean|2,304 rpm|
+|2021 Mean|2,274 rpm|
+|Drop|30 rpm|
 
-## What We Learned
+The 30 rpm drop from 2020 to 2021 represents the immediate impact of enforcement. Pitchers who had relied on sticky substances had to adapt quickly.
 
-Let's summarize what the data revealed:
+## Distribution Shift
 
-1. **Spin rates rose 84 rpm**: From 2,239 rpm (2015) to 2,323 rpm (2025)
-2. **High-spin fastballs doubled**: From 6.1% to 13.2% at 2500+ rpm
-3. **The sticky substance era peaked in 2020**: 15% of fastballs exceeded 2,500 rpm
-4. **The crackdown worked**: 30 rpm drop in 2021
-5. **But innovation won**: Legal methods pushed spin even higher by 2025
-6. **The trend is significant**: R² = 0.64, p = 0.003, +5.58 rpm per year
+We compare the full spin rate distributions between 2015 and 2025 in Figure 4.4.
 
-The spin rate saga shows how baseball evolves: teams push boundaries, rules respond, and then innovation finds new paths forward.
+```python
+df_2015 = load_season(2015, columns=['pitch_type', 'release_spin_rate'])
+df_2025 = load_season(2025, columns=['pitch_type', 'release_spin_rate'])
 
-## Try It Yourself
+spin_2015 = df_2015[(df_2015['pitch_type'] == 'FF') &
+                    (df_2015['release_spin_rate'] > 0) &
+                    (df_2015['release_spin_rate'] < 4000)]['release_spin_rate']
+spin_2025 = df_2025[(df_2025['pitch_type'] == 'FF') &
+                    (df_2025['release_spin_rate'] > 0) &
+                    (df_2025['release_spin_rate'] < 4000)]['release_spin_rate']
 
-The complete analysis code is available at:
-`github.com/mingksong/mlb-statcast-book/chapters/04_spin_rate/`
+fig, ax = plt.subplots(figsize=(10, 6))
+ax.hist(spin_2015, bins=50, alpha=0.6, label='2015', density=True, color='#1f77b4')
+ax.hist(spin_2025, bins=50, alpha=0.6, label='2025', density=True, color='#ff7f0e')
+ax.axvline(spin_2015.mean(), color='#1f77b4', linestyle='--', linewidth=2)
+ax.axvline(spin_2025.mean(), color='#ff7f0e', linestyle='--', linewidth=2)
+ax.set_xlabel('Spin Rate (rpm)', fontsize=12)
+ax.set_ylabel('Density', fontsize=12)
+ax.set_title('Spin Rate Distribution Shift: 2015 vs 2025', fontsize=14)
+ax.legend()
+plt.tight_layout()
+plt.savefig('figures/fig04_distribution_comparison.png', dpi=150)
+```
 
-Try modifying the code to explore:
-- How did spin rates change for breaking balls vs. fastballs?
-- Which individual pitchers showed the biggest drops after the crackdown?
-- Is there a correlation between spin rate and strikeout rate?
+![The entire spin rate distribution shifted rightward from 2015 to 2025](../../chapters/04_spin_rate/figures/fig04_distribution_comparison.png)
+
+|Percentile|2015|2025|Change|
+|----------|----|----|------|
+|10th|2,023 rpm|2,120 rpm|+97 rpm|
+|25th|2,132 rpm|2,219 rpm|+87 rpm|
+|Median|2,253 rpm|2,324 rpm|+71 rpm|
+|75th|2,366 rpm|2,428 rpm|+62 rpm|
+|90th|2,459 rpm|2,527 rpm|+68 rpm|
+
+The entire distribution shifted rightward. Even low-spin pitchers (10th percentile) gained nearly 100 rpm. This suggests league-wide improvements in pitch design and training, not just individual outliers.
+
+## Statistical Validation
+
+We validate the trend using linear regression.
+
+```python
+years = spin_df['year'].values
+means = spin_df['mean'].values
+
+slope, intercept, r_value, p_value, std_err = stats.linregress(years, means)
+r_squared = r_value ** 2
+slope_ci_lower = slope - 1.96 * std_err
+slope_ci_upper = slope + 1.96 * std_err
+```
+
+|Metric|Value|Interpretation|
+|------|-----|--------------|
+|Slope|+5.58 rpm/year|Consistent annual increase|
+|Slope 95% CI|[2.84, 8.32]|Robust estimate|
+|R²|0.639|Strong fit|
+|p-value|0.003|Very significant|
+
+The R² of 0.639 indicates that year explains nearly two-thirds of the variance in average spin rate. The trend is highly significant (p = 0.003).
+
+## Period Comparison
+
+We compare the early period (2015-2017) to the late period (2023-2025) using a two-sample t-test.
+
+```python
+early_data, late_data = [], []
+
+for year in [2015, 2016, 2017]:
+    df = load_season(year, columns=['pitch_type', 'release_spin_rate'])
+    spin = df[(df['pitch_type'] == 'FF') &
+              (df['release_spin_rate'] > 0) &
+              (df['release_spin_rate'] < 4000)]['release_spin_rate']
+    early_data.extend(spin.tolist())
+
+for year in [2023, 2024, 2025]:
+    df = load_season(year, columns=['pitch_type', 'release_spin_rate'])
+    spin = df[(df['pitch_type'] == 'FF') &
+              (df['release_spin_rate'] > 0) &
+              (df['release_spin_rate'] < 4000)]['release_spin_rate']
+    late_data.extend(spin.tolist())
+
+early = np.array(early_data)
+late = np.array(late_data)
+
+t_stat, p_value = stats.ttest_ind(early, late)
+pooled_std = np.sqrt(((len(early)-1)*early.std()**2 + (len(late)-1)*late.std()**2) /
+                      (len(early) + len(late) - 2))
+cohens_d = (late.mean() - early.mean()) / pooled_std
+```
+
+|Metric|Value|
+|------|-----|
+|Early Period Mean (2015-17)|2,255 rpm|
+|Late Period Mean (2023-25)|2,301 rpm|
+|Difference|+46 rpm|
+|95% CI for Difference|[45, 46] rpm|
+|t-statistic|-154.66|
+|p-value|<0.001|
+|Cohen's d|0.260|
+
+The effect size (Cohen's d = 0.26) falls in the "small" range. However, in baseball terms, 46 additional rpm creates measurably different pitch movement—more rise on fastballs, more break on breaking balls.
+
+## Summary
+
+The spin rate evolution from 2015 to 2025 reveals a complex story:
+
+1. **Average spin increased 84 rpm** from 2,239 (2015) to 2,323 (2025)
+2. **High-spin fastballs more than doubled** from 6.1% to 13.2% at 2500+ rpm
+3. **The sticky substance era peaked in 2020** with 15.0% of fastballs exceeding 2,500 rpm
+4. **The crackdown caused a 30 rpm drop** from 2020 to 2021
+5. **Legal innovation drove recovery** with spin rates exceeding pre-crackdown levels by 2025
+6. **The trend is statistically significant** (R² = 0.639, p = 0.003)
+
+What enabled the recovery without foreign substances? Pitch design technology, legal grip products, weighted ball training programs, and a focus on spin efficiency in player development all contributed. The game adapted and found legitimate paths to higher spin.
+
+## Further Reading
+
+- Boddy, K. (2020). "Spin Rate and Pitch Movement." *Driveline Baseball Research*.
+- Nathan, A. M. (2019). "The Physics of Spin Rate." *Baseball Research Journal*.
+
+## Exercises
+
+1. Analyze spin rate trends for breaking balls (slider, curveball). Did they show the same 2020 peak and 2021 drop pattern as fastballs?
+
+2. Identify individual pitchers who showed the largest spin rate drops from 2020 to 2021. What happened to their performance?
+
+3. Calculate the correlation between spin rate and swinging strike rate. Is higher spin actually more effective?
 
 ```bash
 cd chapters/04_spin_rate

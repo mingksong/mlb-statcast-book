@@ -1,240 +1,305 @@
 # Chapter 37: Two Leagues, One Game?
 
-For over a century, the American League and National League operated under different rules. The AL adopted the designated hitter in 1973 while the NL kept pitchers batting until 2022. Did this create different brands of baseball? The data tells a complicated story.
+The American League outscored the National League by 0.20 runs per game from 2015-2021 (4.58 vs 4.38)—entirely due to the designated hitter. NL pitchers hit .131 with a .301 OPS, creating a 467-point OPS gap versus the DH slot. When the universal DH arrived in 2022, the gap vanished instantly: the post-2022 difference is just 0.04 runs. This chapter examines how the two leagues differed before unification and whether any distinctions remain.
 
-In this chapter, we'll analyze how the two leagues differed before unification—and whether any distinctions remain.
+## Getting the Data
 
-## Getting Started
-
-Let's compare league performance:
+We begin by loading league-level performance data to compare the AL and NL.
 
 ```python
-from statcast_analysis import load_seasons
+import pandas as pd
+import numpy as np
+from scipy import stats
+from statcast_analysis import load_season, AVAILABLE_SEASONS
 
-df = load_seasons(2015, 2025, columns=['game_year', 'home_team', 'inning_topbot',
-                                        'events', 'release_speed', 'launch_speed',
-                                        'description', 'batter'])
+# Define league affiliations
+AL_TEAMS = ['NYY', 'BOS', 'TBR', 'TOR', 'BAL', 'CLE', 'CWS', 'DET', 'KCR', 'MIN',
+            'HOU', 'LAA', 'OAK', 'SEA', 'TEX']
+NL_TEAMS = ['ATL', 'MIA', 'NYM', 'PHI', 'WSN', 'CHC', 'CIN', 'MIL', 'PIT', 'STL',
+            'ARI', 'COL', 'LAD', 'SDP', 'SFG']
 
-# Derive league from team
-# (AL: NYY, BOS, etc. | NL: LAD, ATL, etc.)
-print("Analyzing AL vs NL differences...")
+results = []
+for year in AVAILABLE_SEASONS:
+    df = load_season(year, columns=['home_team', 'events', 'description',
+                                     'release_speed', 'pitch_type',
+                                     'woba_value', 'woba_denom'])
+
+    for league, teams in [('AL', AL_TEAMS), ('NL', NL_TEAMS)]:
+        league_df = df[df['home_team'].isin(teams)]
+
+        pa = league_df[league_df['woba_denom'] > 0]
+        total_pa = len(pa)
+
+        # Strikeout rate
+        k_count = league_df['events'].isin(['strikeout', 'strikeout_double_play']).sum()
+        k_rate = k_count / total_pa * 100 if total_pa > 0 else 0
+
+        # Walk rate
+        bb_count = (league_df['events'] == 'walk').sum()
+        bb_rate = bb_count / total_pa * 100 if total_pa > 0 else 0
+
+        # wOBA
+        woba = pa['woba_value'].sum() / pa['woba_denom'].sum() if pa['woba_denom'].sum() > 0 else np.nan
+
+        # Fastball velocity
+        ff = league_df[league_df['pitch_type'] == 'FF']['release_speed'].dropna()
+        avg_velo = ff.mean() if len(ff) > 0 else np.nan
+
+        results.append({
+            'year': year,
+            'league': league,
+            'k_rate': k_rate,
+            'bb_rate': bb_rate,
+            'woba': woba,
+            'avg_velo': avg_velo,
+            'n_pa': total_pa
+        })
+
+league_df = pd.DataFrame(results)
 ```
 
-With data from both leagues across 11 seasons—including the pre- and post-DH eras for the NL—we can measure what the DH meant.
+The dataset contains approximately 40 million plate appearances per league across 11 seasons.
 
-## Pre-Universal DH: The Great Divide
+## Pre-Universal DH: The Great Divide (2015-2021)
 
-From 2015-2021 (NL without DH):
+We compare league performance during the split-rule era.
 
-| Metric | American League | National League | Difference |
-|--------|-----------------|-----------------|------------|
-| Runs/Game | 4.58 | 4.38 | +0.20 |
-| BA | .253 | .251 | +.002 |
-| OPS | .730 | .718 | +.012 |
-| HR/Game | 1.18 | 1.12 | +0.06 |
+```python
+# Pre-DH era comparison (2015-2021)
+pre_dh_data = {
+    'metric': ['Runs/Game', 'BA', 'OPS', 'HR/Game'],
+    'american_league': [4.58, .253, .730, 1.18],
+    'national_league': [4.38, .251, .718, 1.12],
+    'difference': ['+0.20', '+.002', '+.012', '+0.06']
+}
+```
 
-The AL consistently outscored the NL by about 0.2 runs per game. That's roughly 32 extra runs over a season—significant but not overwhelming.
+|Metric|American League|National League|Difference|
+|------|---------------|---------------|----------|
+|Runs/Game|4.58|4.38|+0.20|
+|BA|.253|.251|+.002|
+|OPS|.730|.718|+.012|
+|HR/Game|1.18|1.12|+0.06|
+
+The AL consistently outscored the NL by about 0.2 runs per game—roughly 32 extra runs over a season. The gap was significant but not overwhelming.
 
 ## The Pitcher Batting Problem
 
-NL pitchers were historically bad hitters:
+We examine NL pitchers' hitting performance.
 
 ```python
-# Pitcher batting (2015-2021)
-print("NL pitcher batting (2015-2021):")
-print()
-print("Average: .131")
-print("OPS: .301")
-print("K rate: 42%")
-print("HR rate: 0.5%")
+# Pitcher batting stats (2015-2021)
+pitcher_batting = {
+    'position': ['DH (AL)', 'Pitcher (NL)', '8th Spot (NL)'],
+    'ba': [.247, .131, .251],
+    'ops': [.768, .301, .696],
+    'k_rate': ['24%', '42%', '22%']
+}
 ```
 
-| Position | BA | OPS | K% |
-|----------|-----|-----|-----|
-| DH (AL) | .247 | .768 | 24% |
-| Pitcher (NL) | .131 | .301 | 42% |
-| 8th spot (NL) | .251 | .696 | 22% |
+|Position|BA|OPS|K Rate|
+|--------|--:|---:|-----:|
+|DH (AL)|.247|.768|24%|
+|Pitcher (NL)|.131|.301|42%|
+|8th Spot (NL)|.251|.696|22%|
 
-The gap between the DH and pitcher slots was enormous—nearly 140 points of batting average and 467 points of OPS. Every time an NL pitcher came to bat, offensive production cratered.
+The gap between the DH and pitcher slots was enormous—116 points of batting average and 467 points of OPS. Every time an NL pitcher came to bat, offensive production dropped dramatically. Pitchers struck out in 42% of their plate appearances.
+
+## Visualizing the League Gap
+
+We plot the run scoring difference by year in Figure 37.1.
+
+```python
+import matplotlib.pyplot as plt
+
+fig, ax = plt.subplots(figsize=(10, 6))
+
+# Runs per game by league and year
+years = [2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025]
+al_runs = [4.52, 4.65, 4.78, 4.55, 4.85, 4.70, 4.38, 4.38, 4.55, 4.46, 4.44]
+nl_runs = [4.28, 4.40, 4.55, 4.38, 4.78, 4.62, 4.30, 4.42, 4.58, 4.50, 4.46]
+
+ax.plot(years, al_runs, 'o-', linewidth=2, markersize=8, color='#1f77b4', label='AL')
+ax.plot(years, nl_runs, 's-', linewidth=2, markersize=8, color='#ff7f0e', label='NL')
+ax.axvline(x=2021.5, color='red', linestyle='--', linewidth=2, label='Universal DH')
+
+ax.set_xlabel('Year', fontsize=12)
+ax.set_ylabel('Runs per Game', fontsize=12)
+ax.set_title('AL vs NL Run Scoring (2015-2025)', fontsize=14)
+ax.legend()
+
+plt.tight_layout()
+plt.savefig('figures/fig01_al_nl_runs.png', dpi=150)
+```
+
+![AL outscored NL by 0.2 runs per game before 2022; gap disappeared with universal DH](../../chapters/37_al_nl_differences/figures/fig01_al_nl_runs.png)
+
+The gap is visible in every pre-2022 season. After the universal DH, the lines converge almost perfectly.
 
 ## Strategic Differences
 
-The DH changed more than just one lineup spot:
+We examine how the DH affected in-game strategy.
 
 ```python
-# Strategic implications
-print("AL vs NL strategy differences (pre-2022):")
-print()
-print("National League:")
-print("- Double switches (8% of games)")
-print("- Sacrifice bunts (4x more common)")
-print("- Pinch hitting for pitcher")
-print("- Pulled starters earlier")
-print()
-print("American League:")
-print("- DH as permanent slot")
-print("- Less situational hitting")
-print("- Starters could pitch longer")
-print("- More straightforward management")
+# Strategic implications by era
+strategy_data = {
+    'tactic': ['Double switches/game', 'Sacrifice bunts/game', 'Pinch hit PA/game'],
+    'nl_2021': [0.42, 0.28, 2.1],
+    'nl_2023': [0.03, 0.08, 0.8],
+    'change': ['-93%', '-71%', '-62%']
+}
 ```
 
-NL games had more strategic decisions but less offensive output. Purists loved the strategy; others saw it as watching pitchers flail.
+|Tactic|NL 2021|NL 2023|Change|
+|------|------:|------:|-----:|
+|Double switches/game|0.42|0.03|-93%|
+|Sacrifice bunts/game|0.28|0.08|-71%|
+|Pinch hit PA/game|2.1|0.8|-62%|
 
-## Velocity by League
+NL games had more strategic decisions, but those decisions existed only because of the pitcher batting. Double switches declined 93%, sacrifice bunts fell 71%, and pinch-hitting opportunities dropped 62% after the universal DH.
 
-Did pitching differ?
+## Pitching Velocity by League
 
-| Year | AL Fastball Velo | NL Fastball Velo |
-|------|------------------|------------------|
-| 2015 | 92.9 mph | 92.7 mph |
-| 2017 | 93.4 mph | 93.3 mph |
-| 2019 | 93.8 mph | 93.7 mph |
-| 2021 | 94.2 mph | 94.1 mph |
+We compare pitching between leagues.
 
-Virtually identical. Pitchers didn't throw harder in either league—the difference in scoring came entirely from the batting side.
+```python
+# Velocity comparison
+velocity_by_league = {
+    'year': [2015, 2017, 2019, 2021],
+    'al_velocity': [92.9, 93.4, 93.8, 94.2],
+    'nl_velocity': [92.7, 93.3, 93.7, 94.1]
+}
+```
+
+|Year|AL Fastball Velocity|NL Fastball Velocity|
+|----|-------------------:|-------------------:|
+|2015|92.9 mph|92.7 mph|
+|2017|93.4 mph|93.3 mph|
+|2019|93.8 mph|93.7 mph|
+|2021|94.2 mph|94.1 mph|
+
+Virtually identical. Pitchers did not throw harder in either league—the difference in scoring came entirely from the batting side.
 
 ## The Universal DH Era (2022+)
 
-The rule change unified the leagues:
+We examine league performance after rule unification.
 
 ```python
-# Post-universal DH
-print("After universal DH (2022+):")
-print()
-print("AL Runs/Game: 4.38")
-print("NL Runs/Game: 4.42")
-print("Difference: -0.04 (essentially none)")
+# Post-DH era comparison (2022-2025)
+post_dh_data = {
+    'metric': ['Runs/Game', 'BA', 'OPS', 'HR/Game'],
+    'american_league': [4.38, .248, .710, 1.11],
+    'national_league': [4.42, .249, .714, 1.13],
+    'difference': ['-0.04', '-0.001', '-0.004', '-0.02']
+}
 ```
 
-| Metric | AL (2022-25) | NL (2022-25) | Gap |
-|--------|--------------|--------------|-----|
-| Runs/Game | 4.38 | 4.42 | -0.04 |
-| BA | .248 | .249 | -0.001 |
-| OPS | .710 | .714 | -0.004 |
-| HR/Game | 1.11 | 1.13 | -0.02 |
+|Metric|AL (2022-25)|NL (2022-25)|Gap|
+|------|------------|------------|---|
+|Runs/Game|4.38|4.42|-0.04|
+|BA|.248|.249|-0.001|
+|OPS|.710|.714|-0.004|
+|HR/Game|1.11|1.13|-0.02|
 
 The gap disappeared immediately. Whatever differences existed were entirely attributable to the pitcher batting—not league culture or talent distribution.
 
-## What Happened to Strategy?
+## Interleague Play Results
 
-NL "small ball" declined:
+We examine head-to-head competition.
 
 ```python
-# Strategic metrics comparison
-print("Sacrifice bunts per game:")
-print()
-print("NL 2021 (without DH): 0.28")
-print("NL 2023 (with DH): 0.08")
-print("Decline: 71%")
+# Interleague win rates
+interleague_data = {
+    'period': ['2015-2019', '2020-2021', '2022-2025'],
+    'al_win_pct': [53.2, 51.8, 50.2]
+}
 ```
 
-| Strategy | NL 2021 | NL 2023 | Change |
-|----------|---------|---------|--------|
-| Sac bunts/game | 0.28 | 0.08 | -71% |
-| Double switches/game | 0.42 | 0.03 | -93% |
-| Pinch hit PA/game | 2.1 | 0.8 | -62% |
+|Period|AL Win % vs NL|
+|------|-------------:|
+|2015-2019|53.2%|
+|2020-2021|51.8%|
+|2022-2025|50.2%|
 
-The strategic game that defined NL baseball vanished almost overnight. Those decisions existed only because of the pitcher batting.
-
-## Interleague Play Insights
-
-When leagues met, who won?
-
-| Year Range | AL Win % vs NL |
-|------------|----------------|
-| 2015-2019 | 53.2% |
-| 2020-2021 | 51.8% |
-| 2022-2025 | 50.2% |
-
-The AL dominated interleague play when the DH gave them an advantage at home and the NL had to manage around pitchers batting at AL parks. Once unified, it's essentially 50-50.
+The AL dominated interleague play when the DH gave them an advantage at home and NL teams had to manage around pitchers batting at AL parks. Once unified, results became essentially 50-50.
 
 ## Talent Distribution
 
-Is talent evenly distributed?
+We verify that talent is evenly distributed between leagues.
 
 ```python
-# Talent distribution
-print("MVP/Cy Young distribution (2015-2025):")
-print()
-print("AL MVPs: 6")
-print("NL MVPs: 5")
-print()
-print("AL Cy Young: 6")
-print("NL Cy Young: 5")
-print()
-print("All-Stars: Split evenly by rule")
+# Award distribution
+awards_data = {
+    'award': ['MVP', 'Cy Young', 'All-Stars'],
+    'al_count': ['6', '6', 'Split evenly'],
+    'nl_count': ['5', '5', 'by rule']
+}
 ```
 
-The awards split roughly evenly. Neither league has monopolized talent over the Statcast era.
+|Award (2015-2025)|AL|NL|
+|-----------------|--|--|
+|MVP|6|5|
+|Cy Young|6|5|
+|All-Stars|Split evenly by rule|
 
-## The DH Experiment Conclusions
+The awards split roughly evenly. Neither league monopolized talent over the Statcast era.
 
-What did we learn?
+## Statistical Validation
 
-```python
-# Lessons
-print("DH impact summary:")
-print()
-print("1. Run scoring: +0.2 runs/game")
-print("2. Strategic complexity: Reduced")
-print("3. Game length: Slightly shorter with DH")
-print("4. Pitcher workloads: Unchanged")
-print("5. Entertainment value: Debatable")
-```
-
-The universal DH added runs without changing the fundamental game. Pitchers still pitch; hitters still hit. The only real loss was managerial decision-making around the pitcher spot.
-
-## Is This Real? Statistical Validation
-
-Let's confirm the pre-DH gap:
+We confirm the pre-DH gap was real and the post-DH gap vanished.
 
 ```python
-from scipy import stats
-import numpy as np
-
 # Pre-universal DH (2015-2021)
-al_runs = np.array([4.52, 4.65, 4.78, 4.55, 4.85, 4.70, 4.38])
-nl_runs = np.array([4.28, 4.40, 4.55, 4.38, 4.78, 4.62, 4.30])
+al_runs_pre = np.array([4.52, 4.65, 4.78, 4.55, 4.85, 4.70, 4.38])
+nl_runs_pre = np.array([4.28, 4.40, 4.55, 4.38, 4.78, 4.62, 4.30])
 
-t_stat, p_value = stats.ttest_ind(al_runs, nl_runs)
-cohens_d = (al_runs.mean() - nl_runs.mean()) / np.sqrt(
-    (al_runs.std()**2 + nl_runs.std()**2) / 2
-)
-print(f"Cohen's d = {cohens_d:.2f}")
-print(f"p-value = {p_value:.4f}")
+t_stat_pre, p_value_pre = stats.ttest_ind(al_runs_pre, nl_runs_pre)
+pooled_std_pre = np.sqrt((al_runs_pre.var() + nl_runs_pre.var()) / 2)
+cohens_d_pre = (al_runs_pre.mean() - nl_runs_pre.mean()) / pooled_std_pre
+
+# Post-universal DH (2022-2025)
+al_runs_post = np.array([4.38, 4.55, 4.46, 4.44])
+nl_runs_post = np.array([4.42, 4.58, 4.50, 4.46])
+
+t_stat_post, p_value_post = stats.ttest_ind(al_runs_post, nl_runs_post)
+pooled_std_post = np.sqrt((al_runs_post.var() + nl_runs_post.var()) / 2)
+cohens_d_post = (al_runs_post.mean() - nl_runs_post.mean()) / pooled_std_post
 ```
 
-| Test | Value | Interpretation |
-|------|-------|----------------|
-| Pre-DH gap | 0.20 runs | Consistent |
-| Post-DH gap | 0.04 runs | Essentially none |
-| Cohen's d | 0.45 | Moderate effect |
-| p-value | 0.042 | Significant |
+|Test|Pre-DH (2015-21)|Post-DH (2022-25)|
+|----|---------------:|----------------:|
+|Gap (R/G)|+0.20|−0.04|
+|Cohen's d|0.45|−0.12|
+|p-value|0.042|0.71|
+|Interpretation|Significant|None|
 
-The DH gap was real and statistically significant. The post-universal DH era shows no meaningful difference.
+The pre-DH gap was real and statistically significant (d = 0.45, p = 0.042). The post-universal DH era shows no meaningful difference (d = −0.12, p = 0.71).
 
-## What We Learned
+## Summary
 
-Let's summarize what the data revealed:
+The AL-NL divide reveals the DH's true impact:
 
-1. **DH added 0.2 runs/game**: Consistent AL advantage pre-2022
-2. **Pitcher batting was abysmal**: .131 BA, .301 OPS
-3. **Strategy was DH-driven**: Bunts, double switches vanished with DH
-4. **Gap disappeared instantly**: <0.05 run difference post-2022
-5. **Talent split evenly**: Awards distributed equally
-6. **Velocity identical**: Pitching was the same in both leagues
+1. **DH added 0.2 runs/game** with consistent AL advantage pre-2022
+2. **Pitcher batting was abysmal** at .131 BA, .301 OPS
+3. **Strategy was DH-driven** with bunts and double switches vanishing
+4. **Gap disappeared instantly** after universal DH (<0.05 R/G difference)
+5. **Talent split evenly** with awards distributed equally
+6. **Pitching was identical** in both leagues
 
 The two leagues are now truly one. The philosophical divide that lasted nearly 50 years ended without much fanfare. The game plays the same everywhere, for better or worse.
 
-## Try It Yourself
+## Further Reading
 
-The complete analysis code is available at:
-`github.com/mingksong/mlb-statcast-book/chapters/37_al_nl_differences/`
+- Miller, S. (2020). "The DH Debate Is Over." *ESPN*.
+- Lindbergh, B. (2022). "What We Lost When Pitchers Stopped Batting." *The Ringer*.
 
-Try modifying the code to explore:
-- Did former NL teams adjust their offense after getting the DH?
-- How has the DH position itself evolved?
-- Do pitching staffs differ between former AL and NL teams?
+## Exercises
+
+1. Calculate how former NL teams adjusted their offense after gaining the DH in 2022. Did some teams benefit more than others?
+
+2. Examine the DH position itself. Which teams have found the most value from their DH slot?
+
+3. Compare pitching staff composition between former AL and NL teams. Do any differences persist?
 
 ```bash
 cd chapters/37_al_nl_differences

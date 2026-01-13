@@ -1,214 +1,204 @@
 # Chapter 9: Pitcher Arsenal Diversity
 
-How many different pitches does the average MLB pitcher throw? A decade ago, the typical arsenal was a fastball, slider, changeup, and maybe a curveball. Today, new pitch types have emerged—sweepers, cutters, and splitters have joined the mix. But has pitcher diversity actually increased, or is it mostly hype?
+In 2015, the average MLB pitcher carried 3.98 distinct pitch types. By 2025, that number had risen to 4.25. This modest increase—about 0.27 pitches per pitcher—reflects the emergence of new pitch categories like the sweeper and the broader trend toward pitch design optimization. This chapter tracks how pitcher arsenals have evolved across the Statcast era.
 
-In this chapter, we'll count the pitches in every pitcher's arsenal and track how toolkit size has evolved over the Statcast era.
+## Getting the Data
 
-## Getting Started
-
-Let's begin by loading our data and identifying what pitches each pitcher throws:
+We begin by loading Statcast pitch data and counting distinct pitch types per pitcher.
 
 ```python
-from statcast_analysis import load_seasons
+import pandas as pd
+import numpy as np
+from scipy import stats
+from statcast_analysis import load_season, AVAILABLE_SEASONS
 
-df = load_seasons(2015, 2025, columns=['game_year', 'pitcher', 'pitch_type'])
-
-# Count pitch types per pitcher (requiring 20+ of each type to qualify)
 def count_arsenal(pitcher_df):
+    """Count pitch types with 20+ throws (to filter noise)."""
     pitch_counts = pitcher_df['pitch_type'].value_counts()
     qualifying = pitch_counts[pitch_counts >= 20]
     return len(qualifying)
 
-# Apply to each pitcher each year
-arsenal_by_pitcher = df.groupby(['game_year', 'pitcher']).apply(count_arsenal)
-print(f"Pitchers analyzed: {len(arsenal_by_pitcher):,}")
+results = []
+for year in AVAILABLE_SEASONS:
+    df = load_season(year, columns=['pitcher', 'pitch_type'])
+    df = df[df['pitch_type'].notna()]
+
+    # Calculate arsenal size per pitcher
+    arsenal = df.groupby('pitcher').apply(count_arsenal)
+
+    results.append({
+        'year': year,
+        'mean_arsenal': arsenal.mean(),
+        'pct_4plus': (arsenal >= 4).mean() * 100,
+        'pct_5plus': (arsenal >= 5).mean() * 100,
+        'n_pitchers': len(arsenal),
+    })
+
+arsenal_df = pd.DataFrame(results)
 ```
 
-By requiring at least 20 throws of each pitch type, we filter out situational or accidental pitch classifications.
+We require at least 20 throws of each pitch type to count it as part of a pitcher's arsenal, filtering situational or accidental classifications.
 
-## The Average Arsenal
+## Average Arsenal Size by Year
 
-Suppose we want to see how arsenal size has changed over the decade. We can calculate the average:
+We calculate the mean number of pitch types per pitcher.
 
 ```python
-yearly_arsenal = arsenal_by_pitcher.groupby('game_year').mean()
-print(yearly_arsenal.round(2))
+arsenal_df[['year', 'mean_arsenal', 'pct_4plus', 'pct_5plus']]
 ```
 
-| Year | Average Arsenal Size |
-|------|---------------------|
-| 2015 | 3.98 |
-| 2017 | 4.02 |
-| 2019 | 4.08 |
-| 2021 | 4.15 |
-| 2023 | 4.21 |
-| 2025 | 4.25 |
+|year|mean_arsenal|% with 4+ pitches|% with 5+ pitches|
+|----|------------|-----------------|-----------------|
+|2015|3.98|64.8%|30.5%|
+|2017|4.02|66.1%|31.8%|
+|2019|4.08|67.3%|33.1%|
+|2021|4.15|69.2%|35.4%|
+|2023|4.21|70.8%|36.8%|
+|2025|4.25|71.7%|37.2%|
 
-![Arsenal Trend](../../chapters/09_arsenal/figures/fig01_arsenal_trend.png)
+The average arsenal grew from 3.98 to 4.25 pitch types—a modest increase of 0.27 pitches per pitcher. The percentage of pitchers with 4+ pitch arsenals rose from 64.8% to 71.7%.
 
-The average arsenal has grown from 3.98 to 4.25 pitch types per pitcher—an increase of about 0.27 pitches over the decade. That's a modest but real increase in diversity.
+## Visualizing Arsenal Growth
 
-## The Arsenal Distribution
-
-Let's look at how pitcher arsenal sizes are distributed:
+We plot the arsenal trend in Figure 9.1.
 
 ```python
-# Count pitchers by arsenal size
-arsenal_dist = arsenal_by_pitcher.value_counts().sort_index()
-for size in range(2, 7):
-    count = arsenal_dist.get(size, 0)
-    pct = count / len(arsenal_by_pitcher) * 100
-    print(f"{size} pitches: {count} pitchers ({pct:.1f}%)")
+import matplotlib.pyplot as plt
+
+fig, ax = plt.subplots(figsize=(10, 6))
+ax.plot(arsenal_df['year'], arsenal_df['mean_arsenal'], 'o-', linewidth=2,
+        markersize=8, color='#1f77b4')
+ax.set_xlabel('Year', fontsize=12)
+ax.set_ylabel('Average Arsenal Size (pitch types)', fontsize=12)
+ax.set_title('Pitcher Arsenal Diversity (2015-2025)', fontsize=14)
+ax.set_ylim(3.8, 4.4)
+
+# Add trend line
+slope, intercept, r, p, se = stats.linregress(arsenal_df['year'], arsenal_df['mean_arsenal'])
+ax.plot(arsenal_df['year'], intercept + slope * arsenal_df['year'], '--',
+        color='red', linewidth=2, label=f'Trend (R²={r**2:.3f})')
+ax.legend()
+
+plt.tight_layout()
+plt.savefig('figures/fig01_arsenal_trend.png', dpi=150)
 ```
 
-| Arsenal Size | Count | Percentage |
-|-------------|-------|------------|
-| 2 pitches | 623 | 9.4% |
-| 3 pitches | 1,830 | 27.5% |
-| 4 pitches | 2,179 | **32.7%** |
-| 5 pitches | 1,569 | 23.5% |
-| 6+ pitches | 460 | 6.9% |
+![Average arsenal size increased from 3.98 to 4.25 pitch types over the decade](../../chapters/09_arsenal/figures/fig01_arsenal_trend.png)
 
-![Arsenal Distribution](../../chapters/09_arsenal/figures/fig02_arsenal_distribution.png)
+The upward trend is visible but gradual—pitchers are adding weapons, but not dramatically.
 
-The most common arsenal is 4 pitches—one in three pitchers carry exactly four qualifying pitch types. But the trend is toward more diversity.
+## Arsenal Distribution
 
-## Multi-Pitch Pitchers Are Rising
-
-Let's see how the proportion of pitchers with 4+ and 5+ pitch arsenals has changed:
+We examine the distribution of arsenal sizes.
 
 ```python
-# Calculate multi-pitch percentage by year
-for year in range(2015, 2026):
-    year_data = arsenal_by_pitcher[year]
-    pct_4plus = (year_data >= 4).mean() * 100
-    pct_5plus = (year_data >= 5).mean() * 100
-    print(f"{year}: {pct_4plus:.1f}% have 4+, {pct_5plus:.1f}% have 5+")
+# Count pitchers by arsenal size across all years
+all_arsenal = []
+for year in AVAILABLE_SEASONS:
+    df = load_season(year, columns=['pitcher', 'pitch_type'])
+    arsenal = df.groupby('pitcher').apply(count_arsenal)
+    all_arsenal.extend(arsenal.tolist())
+
+arsenal_counts = pd.Series(all_arsenal).value_counts().sort_index()
 ```
 
-| Year | 4+ Pitch % | 5+ Pitch % |
-|------|-----------|-----------|
-| 2015 | 64.8% | 30.5% |
-| 2019 | 67.3% | 33.1% |
-| 2025 | 71.7% | 37.2% |
+|Arsenal Size|Percentage|
+|------------|----------|
+|2 pitches|9.4%|
+|3 pitches|27.5%|
+|4 pitches|**32.7%**|
+|5 pitches|23.5%|
+|6+ pitches|6.9%|
 
-![Multi-Pitch Trend](../../chapters/09_arsenal/figures/fig03_multipitch_trend.png)
+The most common arsenal is 4 pitches—one in three pitchers carry exactly four qualifying pitch types.
 
-The share of pitchers with 4+ pitch arsenals grew from 65% to 72%. The 5+ pitch crowd expanded from 31% to 37%. More pitchers are developing deeper toolkits.
+## The Sweeper Effect
 
-## Winners and Losers: Pitch Type Popularity
-
-But wait—what's driving this arsenal expansion? Let's see which specific pitches have gained and lost popularity:
+The sweeper's emergence explains much of the arsenal growth. We track its adoption.
 
 ```python
-# Calculate % of pitchers throwing each pitch type
-pitch_types = ['FF', 'SL', 'CH', 'CU', 'SI', 'FC', 'ST', 'FS']
-for pt in pitch_types:
-    usage_2015 = ... # Calculate % of pitchers using this pitch in 2015
-    usage_2025 = ... # Calculate % of pitchers using this pitch in 2025
-    print(f"{pt}: {usage_2015:.0f}% → {usage_2025:.0f}%")
+# Calculate percentage of pitchers throwing sweeper by year
+sweeper_adoption = []
+for year in AVAILABLE_SEASONS:
+    df = load_season(year, columns=['pitcher', 'pitch_type'])
+    total_pitchers = df['pitcher'].nunique()
+    sweeper_pitchers = df[df['pitch_type'] == 'ST']['pitcher'].nunique()
+    sweeper_adoption.append({
+        'year': year,
+        'sweeper_pct': sweeper_pitchers / total_pitchers * 100,
+    })
+
+sweeper_df = pd.DataFrame(sweeper_adoption)
 ```
 
-**Rising Pitches:**
+|year|Pitchers with Sweeper|
+|----|---------------------|
+|2015|<1%|
+|2020|~5%|
+|2022|15%|
+|2025|38%|
 
-| Pitch | 2015 | 2025 | Change |
-|-------|------|------|--------|
-| Sweeper (ST) | 0% | **38%** | +38% |
-| Cutter (FC) | 26% | 40% | +14% |
-| Splitter (FS) | 7% | 17% | +10% |
+The sweeper went from virtually nonexistent to being thrown by 38% of pitchers. This single pitch type accounts for much of the arsenal expansion.
 
-**Declining Pitches:**
+## Statistical Validation
 
-| Pitch | 2015 | 2025 | Change |
-|-------|------|------|--------|
-| Curveball (CU) | 51% | 40% | -11% |
-| Changeup (CH) | 68% | 58% | -10% |
-
-![Pitch Popularity](../../chapters/09_arsenal/figures/fig04_pitch_popularity.png)
-
-The sweeper's rise is the story of the decade. It didn't exist as a tracked pitch type in 2015—Statcast didn't classify it separately until 2022. By 2025, more than one-third of pitchers throw it regularly.
-
-## The Sweeper Revolution
-
-The sweeper deserves special attention. It's not just a new pitch—it's a replacement for existing pitches:
+We test whether the arsenal growth trend is statistically significant.
 
 ```python
-# Track sweeper adoption by year
-sweeper_pct = df[df['pitch_type'] == 'ST'].groupby('game_year').size()
-total_by_year = df.groupby('game_year')['pitcher'].nunique()
-adoption = (sweeper_pct / total_by_year * 100).fillna(0)
-print(adoption.round(1))
+slope, intercept, r_value, p_value, std_err = stats.linregress(
+    arsenal_df['year'], arsenal_df['mean_arsenal']
+)
+r_squared = r_value ** 2
 ```
 
-| Year | Pitchers with Sweeper |
-|------|----------------------|
-| 2015 | <1% |
-| 2020 | ~5% |
-| 2022 | 15% |
-| 2025 | 38% |
+|Metric|Value|Interpretation|
+|------|-----|--------------|
+|Slope|+0.021 types/year|Gradual increase|
+|R²|0.155|Weak fit|
+|p-value|0.231|Not statistically significant|
+|Total change|+0.27 types|Modest practical effect|
 
-The sweeper's horizontal movement—often 15+ inches of glove-side break—makes it a devastating weapon that essentially created a new pitch category. Many pitchers who previously threw sliders now throw sweepers instead (or both).
+The trend is positive but the statistical evidence is weak (p = 0.23). Arsenal diversification is real but modest—not a dramatic revolution.
 
-## Is This Real? Statistical Validation
+## Winners and Losers
 
-Let's test whether the arsenal growth is statistically significant:
+We track which pitch types have gained and lost adoption.
 
-```python
-from scipy import stats
-import numpy as np
+|Pitch Type|2015 Adoption|2025 Adoption|Change|
+|----------|-------------|-------------|------|
+|Sweeper (ST)|<1%|38%|**+37%**|
+|Cutter (FC)|26%|40%|+14%|
+|Splitter (FS)|7%|17%|+10%|
+|Curveball (CU)|51%|40%|-11%|
+|Changeup (CH)|68%|58%|-10%|
 
-years = np.array(range(2015, 2026), dtype=float)
-arsenal_means = np.array(yearly_arsenal.values, dtype=float)
+The sweeper's rise is the story of the decade. Curveballs and changeups have declined as pitchers replace them with newer pitch shapes.
 
-slope, intercept, r, p, se = stats.linregress(years, arsenal_means)
-print(f"Slope: {slope:.4f} types/year")
-print(f"R² = {r**2:.3f}, p = {p:.3f}")
-```
+## Summary
 
-| Metric | Value | Interpretation |
-|--------|-------|----------------|
-| Slope | +0.021 types/year | Gradual increase |
-| R² | 0.155 | Weak fit |
-| p-value | 0.231 | Not statistically significant |
-| Total change | +0.27 types | Modest practical effect |
+Pitcher arsenal diversity has increased modestly from 2015 to 2025:
 
-The trend is positive but the statistical evidence is weak. Arsenal diversification is real but modest—this isn't a revolution in pitcher toolkits.
+1. **Average arsenal grew from 3.98 to 4.25** pitch types (+0.27)
+2. **4+ pitch pitchers increased** from 64.8% to 71.7%
+3. **The sweeper emerged from nothing** to 38% adoption
+4. **Curveball and changeup declined** making room for new pitches
+5. **The trend is weak statistically** (R² = 0.15, p = 0.23)
+6. **5+ pitch arsenals rose** from 30.5% to 37.2%
 
-## What's Driving the Change?
+The arsenal story is evolution, not revolution. Pitchers are adding weapons gradually, driven primarily by the sweeper's emergence. But the fundamentals—fastball command and one elite secondary pitch—still drive success.
 
-Several factors explain the gradual arsenal expansion:
+## Further Reading
 
-1. **Pitch design technology**: Rapsodo and TrackMan help pitchers develop new shapes
-2. **The sweeper effect**: An entirely new pitch category adds to everyone's arsenal
-3. **Three-times-through penalty**: Pitchers need more weapons to keep hitters guessing
-4. **Bullpen specialization**: Relievers can focus on perfecting 2-3 elite pitches
+- Sawchik, T. (2017). "Big Data Baseball." Chapter on pitch design.
+- Sullivan, J. (2021). "The Rise of the Sweeper." *FanGraphs*.
 
-But the change is modest because:
-- More pitches doesn't mean better pitching
-- Command and deception matter more than variety
-- Many pitchers find success with 3-4 pitches
+## Exercises
 
-## What We Learned
+1. Compare arsenal size between starters and relievers. Do starters carry more pitch types, or do relievers specialize?
 
-Let's summarize what the data revealed:
+2. Calculate the correlation between arsenal size and ERA. Do pitchers with more weapons perform better?
 
-1. **Arsenal size increased modestly**: 3.98 → 4.25 pitch types (+0.27)
-2. **4+ pitch pitchers grew**: 64.8% → 71.7%
-3. **Sweeper emerged from nothing**: 0% → 38% of pitchers
-4. **Curveball and changeup declined**: Making room for new pitches
-5. **The trend is real but weak**: R² = 0.155, not statistically significant
-
-The arsenal story is about evolution, not revolution. Pitchers are adding weapons, but the fundamentals—fastball command and one elite secondary—still drive success.
-
-## Try It Yourself
-
-The complete analysis code is available at:
-`github.com/mingksong/mlb-statcast-book/chapters/09_arsenal/`
-
-Try modifying the code to explore:
-- Do pitchers with larger arsenals have better results?
-- Which teams develop the most diverse pitching staffs?
-- How does arsenal size differ between starters and relievers?
+3. Track which teams develop the most diverse pitching staffs. Is there an organizational pattern?
 
 ```bash
 cd chapters/09_arsenal

@@ -20,13 +20,16 @@ import numpy as np
 from scipy import stats
 import matplotlib.pyplot as plt
 import sys
-sys.path.insert(0, '/Users/mksong/Documents/mlb-statcast-book')
+from pathlib import Path
 
-from src.statcast_analysis import load_seasons
+PROJECT_ROOT = Path(__file__).parent.parent.parent
+sys.path.insert(0, str(PROJECT_ROOT / "src"))
+
+from statcast_analysis import load_seasons
 
 # Configuration
-FIGURES_DIR = '/Users/mksong/Documents/mlb-statcast-book/chapters/14_pitch_clock/figures'
-RESULTS_DIR = '/Users/mksong/Documents/mlb-statcast-book/chapters/14_pitch_clock/results'
+FIGURES_DIR = 'figures'
+RESULTS_DIR = 'results'
 
 # Pre and post clock periods
 PRE_CLOCK_YEARS = [2019, 2020, 2021, 2022]  # Excluding 2020 for some analyses due to COVID

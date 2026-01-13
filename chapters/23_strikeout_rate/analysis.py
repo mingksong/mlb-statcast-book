@@ -6,11 +6,15 @@ import numpy as np
 from scipy import stats
 import matplotlib.pyplot as plt
 import sys
-sys.path.insert(0, '/Users/mksong/Documents/mlb-statcast-book')
-from src.statcast_analysis import load_seasons
+from pathlib import Path
 
-FIGURES_DIR = '/Users/mksong/Documents/mlb-statcast-book/chapters/23_strikeout_rate/figures'
-RESULTS_DIR = '/Users/mksong/Documents/mlb-statcast-book/chapters/23_strikeout_rate/results'
+PROJECT_ROOT = Path(__file__).parent.parent.parent
+sys.path.insert(0, str(PROJECT_ROOT / "src"))
+
+from statcast_analysis import load_seasons
+
+FIGURES_DIR = 'figures'
+RESULTS_DIR = 'results'
 
 def main():
     print("=" * 60)

@@ -99,7 +99,7 @@ MIT License
 
 ## Author
 
-[Your Name]
+Minkoo Song
 
 ---
 

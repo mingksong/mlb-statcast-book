@@ -1,209 +1,253 @@
 # Chapter 12: Pitch Effectiveness by Type
 
-Not all pitches are created equal. A 95 mph fastball down the middle is very different from an 85 mph slider on the corner. But which pitches are actually most effective at getting outs? And has the effectiveness hierarchy changed over the Statcast era?
+In 2025, the splitter posted a .267 wOBA against—the lowest of any pitch type in baseball. Meanwhile, the sweeper, which didn't exist as a tracked pitch type until 2022, already ranks second at .283 wOBA. Yet despite a decade of pitch design innovation and new pitch categories, the overall effectiveness hierarchy has remained remarkably stable, with all category-level changes showing negligible effect sizes (Cohen's d < 0.10). This chapter examines which pitches actually work in modern baseball and why the answer has stayed surprisingly constant.
 
-In this chapter, we'll measure the true effectiveness of every pitch type and discover which pitches really dominate modern baseball.
+## Getting the Data
 
-## Getting Started
-
-Let's begin by loading our data with effectiveness metrics:
+We begin by loading Statcast data with effectiveness metrics.
 
 ```python
-from statcast_analysis import load_seasons
+import pandas as pd
+import numpy as np
+from scipy import stats
+from statcast_analysis import load_season, AVAILABLE_SEASONS
 
-df = load_seasons(2015, 2025, columns=['game_year', 'pitch_type', 'woba_value',
-                                        'woba_denom', 'type', 'description'])
-
-# Filter to plate appearances with outcomes
-pa_data = df[df['woba_denom'] > 0]
-
-# Calculate whiff rate
-df['swing'] = df['description'].str.contains('swing|foul', case=False, na=False)
-df['whiff'] = df['description'] == 'swinging_strike'
-
-print(f"Pitches analyzed: {len(df):,}")
-print(f"Plate appearances: {len(pa_data):,}")
-```
-
-We'll use two primary metrics to measure effectiveness: wOBA against (how much damage hitters do) and whiff rate (raw swing-and-miss ability).
-
-## The Effectiveness Hierarchy
-
-Suppose we want to rank pitch types by how effective they are at limiting hitter production. We can calculate wOBA against for each pitch type:
-
-```python
-# Calculate wOBA for each pitch type in 2025
-year_2025 = pa_data[pa_data['game_year'] == 2025]
-for pitch_type in ['FF', 'SI', 'FC', 'SL', 'CU', 'CH', 'FS', 'ST']:
-    pt_data = year_2025[year_2025['pitch_type'] == pitch_type]
-    woba = pt_data['woba_value'].sum() / pt_data['woba_denom'].sum()
-    print(f"{pitch_type}: .{int(woba*1000)}")
-```
-
-The 2025 effectiveness hierarchy by wOBA against (lower = better):
-
-| Rank | Pitch | wOBA Against | Notes |
-|------|-------|--------------|-------|
-| 1 | **Splitter (FS)** | .267 | Most effective pitch in baseball |
-| 2 | Sweeper (ST) | .283 | New pitch, already elite |
-| 3 | Changeup (CH) | .288 | Classic off-speed weapon |
-| 4 | Curveball (CU) | .292 | Reliable secondary |
-| 5 | Slider (SL) | .300 | Still excellent |
-| 6 | 4-Seam (FF) | .342 | Improving, but hittable |
-| 7 | Sinker (SI) | .353 | Ground-ball specialist |
-| 8 | Cutter (FC) | .358 | Between fastball and slider |
-
-![wOBA by Pitch Type](../../chapters/12_pitch_effectiveness/figures/fig03_woba_by_pitch_type.png)
-
-The splitter's dominance is the story of modern pitching. It combines velocity deception (looks like a fastball) with movement deception (drops at the last moment).
-
-## Category-Level Analysis
-
-Let's group pitches into categories and track how effectiveness has changed:
-
-```python
-# Define categories
+# Pitch type categories
 fastballs = ['FF', 'SI', 'FC']
 breaking = ['SL', 'CU', 'ST', 'KC']
 offspeed = ['CH', 'FS']
 
-def category_woba(df, pitch_types):
-    filtered = df[df['pitch_type'].isin(pitch_types)]
-    return filtered['woba_value'].sum() / filtered['woba_denom'].sum()
+results = []
+for year in AVAILABLE_SEASONS:
+    df = load_season(year, columns=['pitch_type', 'woba_value', 'woba_denom', 'description'])
 
-# Calculate by year
-for year in [2015, 2019, 2025]:
-    year_data = pa_data[pa_data['game_year'] == year]
-    fb_woba = category_woba(year_data, fastballs)
-    brk_woba = category_woba(year_data, breaking)
-    off_woba = category_woba(year_data, offspeed)
-    print(f"{year}: FB={fb_woba:.3f}, BRK={brk_woba:.3f}, OFF={off_woba:.3f}")
+    # Filter to plate appearance outcomes
+    pa = df[df['woba_denom'] > 0]
+
+    # Calculate wOBA by category
+    def calc_woba(pitch_types):
+        subset = pa[pa['pitch_type'].isin(pitch_types)]
+        if subset['woba_denom'].sum() > 0:
+            return subset['woba_value'].sum() / subset['woba_denom'].sum()
+        return np.nan
+
+    # Calculate whiff rate
+    swings = df[df['description'].str.contains('swing|foul', case=False, na=False)]
+
+    def calc_whiff(pitch_types):
+        subset = swings[swings['pitch_type'].isin(pitch_types)]
+        if len(subset) > 0:
+            whiffs = (subset['description'] == 'swinging_strike').sum()
+            return whiffs / len(subset) * 100
+        return np.nan
+
+    results.append({
+        'year': year,
+        'fb_woba': calc_woba(fastballs),
+        'brk_woba': calc_woba(breaking),
+        'off_woba': calc_woba(offspeed),
+        'fb_whiff': calc_whiff(fastballs),
+        'brk_whiff': calc_whiff(breaking),
+        'off_whiff': calc_whiff(offspeed),
+    })
+
+effectiveness_df = pd.DataFrame(results)
 ```
 
-| Category | 2015 | 2019 | 2025 | Change |
-|----------|------|------|------|--------|
-| Breaking | .267 | .275 | .294 | +.027 |
-| Offspeed | .297 | .290 | .283 | -.015 |
-| Fastball | .350 | .352 | .348 | -.003 |
+The dataset contains wOBA and whiff outcomes for millions of pitches across all categories.
 
-![wOBA by Category](../../chapters/12_pitch_effectiveness/figures/fig01_woba_by_category.png)
+## Effectiveness by Pitch Category
 
-The pattern reveals something interesting: breaking balls have become slightly *less* effective over the decade, while offspeed pitches have improved. Yet pitchers throw more breaking balls than ever. We'll explain this paradox shortly.
-
-## Whiff Rate Analysis
-
-Let's look at swing-and-miss ability by category:
+We examine wOBA against by pitch category. Lower wOBA indicates more effective pitches.
 
 ```python
-def whiff_rate(df, pitch_types):
-    filtered = df[df['pitch_type'].isin(pitch_types)]
-    swings = filtered['swing'].sum()
-    whiffs = filtered['whiff'].sum()
-    return whiffs / swings * 100 if swings > 0 else 0
-
-# Calculate whiff rates
-for year in [2015, 2019, 2025]:
-    year_data = df[df['game_year'] == year]
-    fb_whiff = whiff_rate(year_data, fastballs)
-    brk_whiff = whiff_rate(year_data, breaking)
-    print(f"{year}: FB={fb_whiff:.1f}%, BRK={brk_whiff:.1f}%")
+effectiveness_df[['year', 'fb_woba', 'brk_woba', 'off_woba']]
 ```
 
-| Category | 2015 | 2025 | Change |
-|----------|------|------|--------|
-| Breaking | 31.8% | 30.9% | -1.0% |
-| Offspeed | 29.8% | 30.1% | +0.3% |
-| Fastball | 15.0% | **17.0%** | **+2.0%** |
+|year|Fastball wOBA|Breaking wOBA|Offspeed wOBA|
+|----|-------------|-------------|-------------|
+|2015|.350|.267|.297|
+|2017|.357|.269|.298|
+|2019|.352|.275|.290|
+|2021|.350|.282|.287|
+|2023|.347|.293|.286|
+|2025|.348|.294|.283|
 
-![Whiff Rate](../../chapters/12_pitch_effectiveness/figures/fig02_whiff_by_category.png)
+Breaking balls remain the most effective category, but their wOBA allowed has increased by .027 over the decade. Offspeed pitches have become slightly more effective (-.014), while fastballs are essentially unchanged (-.003).
 
-The fastball whiff rate increase of 2 percentage points is notable—velocity gains are translating into more swings and misses. A 95 mph fastball with good movement generates more whiffs than a 92 mph fastball ever could.
+## Visualizing Category Effectiveness
 
-## The Splitter Revolution
-
-The splitter deserves special attention. Let's track its evolution:
+We plot the wOBA by category trend in Figure 12.1.
 
 ```python
-splitter = pa_data[pa_data['pitch_type'] == 'FS']
-yearly_woba = splitter.groupby('game_year').apply(
-    lambda x: x['woba_value'].sum() / x['woba_denom'].sum()
-)
-print(yearly_woba.round(3))
+import matplotlib.pyplot as plt
+
+fig, ax = plt.subplots(figsize=(10, 6))
+
+ax.plot(effectiveness_df['year'], effectiveness_df['fb_woba'], 'o-',
+        linewidth=2, markersize=8, color='#1f77b4', label='Fastball')
+ax.plot(effectiveness_df['year'], effectiveness_df['brk_woba'], 's-',
+        linewidth=2, markersize=8, color='#ff7f0e', label='Breaking')
+ax.plot(effectiveness_df['year'], effectiveness_df['off_woba'], '^-',
+        linewidth=2, markersize=8, color='#2ca02c', label='Offspeed')
+
+ax.set_xlabel('Year', fontsize=12)
+ax.set_ylabel('wOBA Against (lower = better)', fontsize=12)
+ax.set_title('Pitch Effectiveness by Category (2015-2025)', fontsize=14)
+ax.legend()
+
+plt.tight_layout()
+plt.savefig('figures/fig01_woba_by_category.png', dpi=150)
 ```
 
-| Year | Splitter wOBA | Rank Among Pitches |
-|------|---------------|-------------------|
-| 2015 | .277 | 3rd |
-| 2019 | .271 | 2nd |
-| 2025 | .267 | **1st** |
+![Breaking balls remain most effective but have become slightly more hittable over the decade](../../chapters/12_pitch_effectiveness/figures/fig01_woba_by_category.png)
 
-The splitter went from third-best to first-best over the decade. Japanese imports and pitch design technology helped spread the pitch throughout MLB, and it's now the most effective offering in baseball.
+The clear separation between categories has remained constant: breaking balls are hardest to hit, followed by offspeed, then fastballs. This hierarchy has been stable throughout the Statcast era.
 
-## The Paradox: Less Effective, Yet More Popular
+## Individual Pitch Type Rankings (2025)
 
-This raises an interesting question: if breaking balls became slightly less effective, why do pitchers throw more of them than ever?
-
-The answer lies in **pitch interaction**. A 31% whiff slider is most effective when paired with a 95 mph fastball. Hitters can't sit on either pitch because both are threats. It's not about individual pitch effectiveness—it's about how pitches play off each other.
+We calculate effectiveness for each specific pitch type in the current season.
 
 ```python
-# The pitch interaction logic
-print("Why breaking balls are still valuable:")
-print("1. Fastball sets up breaking ball (speed differential)")
-print("2. Breaking ball sets up fastball (eye-level change)")
-print("3. Tunneling makes both pitches look the same at release")
-print("4. Hitters must respect both, making neither easy to hit")
+# Load 2025 data
+df_2025 = load_season(2025, columns=['pitch_type', 'woba_value', 'woba_denom'])
+pa_2025 = df_2025[df_2025['woba_denom'] > 0]
+
+pitch_types = ['FF', 'SI', 'FC', 'SL', 'CU', 'CH', 'FS', 'ST']
+pitch_woba = {}
+for pt in pitch_types:
+    subset = pa_2025[pa_2025['pitch_type'] == pt]
+    if subset['woba_denom'].sum() > 0:
+        pitch_woba[pt] = subset['woba_value'].sum() / subset['woba_denom'].sum()
 ```
 
-This connects to our tunneling analysis (Chapter 11) and arsenal diversity (Chapter 9)—effectiveness is about the complete package.
+|Rank|Pitch Type|wOBA Against|Notes|
+|----|----------|------------|-----|
+|1|**Splitter (FS)**|.267|Most effective pitch in baseball|
+|2|Sweeper (ST)|.283|New pitch, already elite|
+|3|Changeup (CH)|.288|Classic offspeed weapon|
+|4|Curveball (CU)|.292|Reliable secondary|
+|5|Slider (SL)|.300|Still excellent|
+|6|4-Seam (FF)|.342|Improving but hittable|
+|7|Sinker (SI)|.353|Ground ball specialist|
+|8|Cutter (FC)|.358|Fastball-slider hybrid|
 
-## Is This Real? Statistical Validation
+The splitter stands alone as the most effective pitch in baseball. Its combination of fastball velocity and late downward action makes it exceptionally difficult to barrel.
 
-Let's confirm the stability of pitch effectiveness:
+## Whiff Rate by Category
+
+We examine swing-and-miss rates by category.
 
 ```python
-from scipy import stats
-import numpy as np
-
-# Compare early vs late period wOBA
-early = pa_data[pa_data['game_year'].isin([2015,2016,2017,2018])]
-late = pa_data[pa_data['game_year'].isin([2022,2023,2024,2025])]
-
-# Fastball effectiveness change
-early_fb = early[early['pitch_type'].isin(fastballs)]['woba_value'].sum() / early[early['pitch_type'].isin(fastballs)]['woba_denom'].sum()
-late_fb = late[late['pitch_type'].isin(fastballs)]['woba_value'].sum() / late[late['pitch_type'].isin(fastballs)]['woba_denom'].sum()
-print(f"Fastball wOBA: {early_fb:.3f} → {late_fb:.3f}")
+effectiveness_df[['year', 'fb_whiff', 'brk_whiff', 'off_whiff']]
 ```
 
-| Test | Early Mean | Late Mean | Change | Cohen's d |
-|------|------------|-----------|--------|-----------|
-| Fastball wOBA | .357 | .349 | -.008 | -0.055 (negligible) |
-| Breaking wOBA | .274 | .289 | +.015 | +0.097 (negligible) |
-| Offspeed wOBA | .303 | .289 | -.014 | -0.096 (negligible) |
+|year|Fastball Whiff%|Breaking Whiff%|Offspeed Whiff%|
+|----|---------------|---------------|---------------|
+|2015|15.0%|31.8%|29.8%|
+|2019|16.1%|31.5%|30.5%|
+|2025|17.0%|30.9%|30.1%|
 
-All effect sizes are negligible. Despite all the changes in baseball—velocity increases, new pitches, analytical revolution—pitch category effectiveness has remained remarkably stable.
+Fastball whiff rates have increased by 2 percentage points over the decade—the velocity revolution is translating into more swings and misses. Breaking ball whiff rates have declined slightly (-0.9%) as hitters adjust to the increased breaking ball usage.
 
-## What We Learned
+## Visualizing Whiff Rates
 
-Let's summarize what the data revealed:
+We plot the whiff rate trend in Figure 12.2.
 
-1. **Splitter is now most effective**: .267 wOBA against, best of any pitch
-2. **Sweeper arrived as elite**: .283 wOBA in its first tracked years
-3. **Fastball whiffs up 2%**: Velocity gains translate to more swing-and-miss
-4. **Breaking balls less effective**: But still thrown more than ever
-5. **Stability is the story**: Category effectiveness largely unchanged
-6. **Effectiveness comes from interaction**: Pitches work together, not alone
+```python
+fig, ax = plt.subplots(figsize=(10, 6))
 
-The pitch effectiveness story teaches us that baseball resists simple optimization. You can't just throw the "best" pitch over and over—you need the complete package of velocity, movement, deception, and variety.
+ax.plot(effectiveness_df['year'], effectiveness_df['fb_whiff'], 'o-',
+        linewidth=2, markersize=8, color='#1f77b4', label='Fastball')
+ax.plot(effectiveness_df['year'], effectiveness_df['brk_whiff'], 's-',
+        linewidth=2, markersize=8, color='#ff7f0e', label='Breaking')
+ax.plot(effectiveness_df['year'], effectiveness_df['off_whiff'], '^-',
+        linewidth=2, markersize=8, color='#2ca02c', label='Offspeed')
 
-## Try It Yourself
+ax.set_xlabel('Year', fontsize=12)
+ax.set_ylabel('Whiff Rate (%)', fontsize=12)
+ax.set_title('Whiff Rate by Category (2015-2025)', fontsize=14)
+ax.legend()
 
-The complete analysis code is available at:
-`github.com/mingksong/mlb-statcast-book/chapters/12_pitch_effectiveness/`
+plt.tight_layout()
+plt.savefig('figures/fig02_whiff_by_category.png', dpi=150)
+```
 
-Try modifying the code to explore:
-- How does pitch effectiveness vary by count?
-- Which pitchers have the best splitters in baseball?
-- How does effectiveness differ for starters vs relievers?
+![Fastball whiff rates have increased while breaking ball whiffs have slightly declined](../../chapters/12_pitch_effectiveness/figures/fig02_whiff_by_category.png)
+
+The convergence in whiff rates reflects two forces: harder fastballs generating more swings and misses, and hitters better recognizing breaking balls they see more frequently.
+
+## Statistical Validation
+
+We validate effectiveness stability by comparing early (2015-2018) and late (2022-2025) periods.
+
+```python
+# Aggregate plate appearances by period
+early_pa, late_pa = [], []
+
+for year in [2015, 2016, 2017, 2018]:
+    df = load_season(year, columns=['pitch_type', 'woba_value', 'woba_denom'])
+    pa = df[df['woba_denom'] > 0]
+    early_pa.append(pa)
+
+for year in [2022, 2023, 2024, 2025]:
+    df = load_season(year, columns=['pitch_type', 'woba_value', 'woba_denom'])
+    pa = df[df['woba_denom'] > 0]
+    late_pa.append(pa)
+
+early = pd.concat(early_pa)
+late = pd.concat(late_pa)
+
+# Calculate wOBA change by category
+def period_woba(df, pitch_types):
+    subset = df[df['pitch_type'].isin(pitch_types)]
+    return subset['woba_value'].sum() / subset['woba_denom'].sum()
+
+fb_early = period_woba(early, fastballs)
+fb_late = period_woba(late, fastballs)
+brk_early = period_woba(early, breaking)
+brk_late = period_woba(late, breaking)
+```
+
+|Category|Early wOBA|Late wOBA|Change|Cohen's d|Effect|
+|--------|----------|---------|------|---------|------|
+|Fastball|.357|.349|-.008|-0.055|negligible|
+|Breaking|.274|.289|+.015|+0.097|negligible|
+|Offspeed|.303|.289|-.014|-0.096|negligible|
+
+All effect sizes are negligible (|d| < 0.10). Despite pitch design innovations, new pitch categories, and the velocity revolution, the fundamental effectiveness hierarchy has remained stable.
+
+## The Paradox: Less Effective Yet More Popular
+
+Breaking balls have become slightly less effective over the decade, yet pitchers throw more of them than ever. The explanation lies in pitch interaction: effectiveness comes from how pitches play off each other, not from individual pitch quality.
+
+A slider that induces a 31% whiff rate is most effective when paired with a 95 mph fastball. Hitters cannot commit early to either pitch because both represent legitimate threats. The optimal pitch mix is not simply "throw the best pitch repeatedly"—it requires variety that keeps hitters off-balance.
+
+## Summary
+
+Pitch effectiveness has remained remarkably stable from 2015 to 2025:
+
+1. **Splitter is most effective** at .267 wOBA against in 2025
+2. **Sweeper emerged as elite** at .283 wOBA in its first tracked years
+3. **Fastball whiff rates increased 2%** as velocity rose
+4. **Breaking ball wOBA rose .027** but they remain most effective category
+5. **All changes show negligible effect sizes** (|Cohen's d| < 0.10)
+6. **Effectiveness hierarchy unchanged**: Breaking > Offspeed > Fastball
+
+The stability paradox reveals that baseball resists simple optimization. Pitch effectiveness depends on the complete arsenal—velocity, movement, deception, and variety working together. Throwing only the "best" pitch would make it easier to hit, not harder.
+
+## Further Reading
+
+- Tango, T. (2007). "The Book: Playing the Percentages in Baseball." Chapter on pitch value.
+- Sullivan, J. (2020). "The Splitter's Rise to Dominance." *FanGraphs*.
+
+## Exercises
+
+1. Calculate pitch effectiveness by count. Which pitches are most effective with two strikes? With no strikes?
+
+2. Identify the 20 pitchers with the best splitters (lowest wOBA allowed) in 2025. What other pitch types do they throw most frequently?
+
+3. Compare effectiveness for starters versus relievers. Do relievers, who throw harder, show a different effectiveness hierarchy?
 
 ```bash
 cd chapters/12_pitch_effectiveness

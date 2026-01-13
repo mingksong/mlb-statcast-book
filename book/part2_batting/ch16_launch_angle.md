@@ -1,235 +1,260 @@
 # Chapter 16: The Launch Angle Revolution
 
-In the previous chapter, we discovered something surprising: exit velocity hasn't increased over the Statcast era. Hitters aren't hitting the ball harder. Yet home runs surged in the late 2010s. So what changed?
+Average launch angle increased from 11.7° in 2015 to 17.8° in 2025—a 6.1 degree shift that fundamentally changed baseball offense. Ground ball rate dropped from 48.1% to 38.1%, while fly ball rate rose from 22.8% to 26.3%. This strategic transformation—not harder contact—explains the power surge of the late 2010s. This chapter examines how hitters learned to lift the ball and the trade-offs that came with elevation.
 
-The answer is launch angle—the vertical angle at which the ball leaves the bat. In this chapter, we'll explore one of baseball's most significant offensive transformations and discover how hitters learned to lift the ball.
+## Getting the Data
 
-## Getting Started
-
-Let's begin by loading batted ball data with launch angle measurements:
+We begin by loading batted ball data with launch angle measurements.
 
 ```python
-from statcast_analysis import load_seasons
+import pandas as pd
+import numpy as np
+from scipy import stats
+from statcast_analysis import load_season, AVAILABLE_SEASONS
 
-df = load_seasons(2015, 2025, columns=['game_year', 'launch_angle', 'launch_speed',
-                                        'events', 'bb_type'])
+results = []
+for year in AVAILABLE_SEASONS:
+    df = load_season(year, columns=['launch_angle', 'launch_speed', 'events', 'bb_type'])
 
-# Filter to batted balls with launch angle data
-batted_balls = df.dropna(subset=['launch_angle'])
-print(f"Total batted balls analyzed: {len(batted_balls):,}")
+    # Filter to batted balls with launch angle data
+    batted = df[df['launch_angle'].notna()]
+
+    # Classify batted ball types
+    gb = (batted['launch_angle'] < 10).mean() * 100
+    ld = ((batted['launch_angle'] >= 10) & (batted['launch_angle'] < 25)).mean() * 100
+    fb = ((batted['launch_angle'] >= 25) & (batted['launch_angle'] < 50)).mean() * 100
+    pu = (batted['launch_angle'] >= 50).mean() * 100
+
+    # Sweet spot rate (8-32 degrees)
+    sweet_spot = ((batted['launch_angle'] >= 8) & (batted['launch_angle'] <= 32)).mean() * 100
+
+    results.append({
+        'year': year,
+        'mean_la': batted['launch_angle'].mean(),
+        'median_la': batted['launch_angle'].median(),
+        'gb_rate': gb,
+        'ld_rate': ld,
+        'fb_rate': fb,
+        'popup_rate': pu,
+        'sweet_spot': sweet_spot,
+        'n_batted': len(batted),
+    })
+
+la_df = pd.DataFrame(results)
 ```
 
-With over 2.1 million batted balls, we can trace exactly how hitters have changed their approach to hitting.
+The dataset contains over 2.1 million batted balls with launch angle data.
 
-## The Dramatic Shift
+## Launch Angle by Year
 
-Suppose we want to see how launch angle has changed over the decade. We can calculate the average by year:
+We calculate average launch angle for each season.
 
 ```python
-# Calculate yearly averages
-yearly_la = batted_balls.groupby('game_year')['launch_angle'].mean()
-print(yearly_la.round(1))
+la_df[['year', 'mean_la', 'median_la']]
 ```
 
-| Year | Mean Launch Angle | Median |
-|------|-------------------|--------|
-| 2015 | 11.7° | 12° |
-| 2016 | 16.2° | 17° |
-| 2017 | 16.5° | 18° |
-| 2018 | 16.5° | 18° |
-| 2019 | 16.6° | 18° |
-| 2020 | 16.6° | 20° |
-| 2021 | 16.8° | 20° |
-| 2022 | 16.9° | 19° |
-| 2023 | 16.8° | 19° |
-| 2024 | 17.5° | 20° |
-| 2025 | 17.8° | 20° |
+|year|Mean LA|Median LA|
+|----|-------|---------|
+|2015|11.7°|12°|
+|2016|16.2°|17°|
+|2017|16.5°|18°|
+|2019|16.6°|18°|
+|2021|16.8°|20°|
+|2023|16.8°|19°|
+|2025|17.8°|20°|
 
-![Launch Angle Trend](../../chapters/16_launch_angle/figures/fig01_la_trend.png)
+Average launch angle increased by 6.1 degrees over the decade. The jump from 2015 to 2016 alone was 4.5 degrees—a combination of Statcast calibration changes and genuine strategic shift.
 
-A **6.1 degree increase** in average launch angle—that's enormous. The 2015-to-2016 jump alone was over 4 degrees. This wasn't gradual evolution; it was a paradigm shift.
+## Visualizing Launch Angle
 
-## The 2015 Anomaly (Again)
-
-Just like exit velocity, the 2015 launch angle data looks suspicious. An average of 11.7° would mean nearly half of all batted balls were ground balls—which they were, but that's unusual by modern standards.
+We plot the launch angle trend in Figure 16.1.
 
 ```python
-# Compare 2015 to later years
-la_2015 = batted_balls[batted_balls['game_year'] == 2015]['launch_angle'].mean()
-la_2016 = batted_balls[batted_balls['game_year'] == 2016]['launch_angle'].mean()
-print(f"2015: {la_2015:.1f}°")
-print(f"2016: {la_2016:.1f}°")
-print(f"Jump: {la_2016 - la_2015:.1f}°")
+import matplotlib.pyplot as plt
+
+fig, ax = plt.subplots(figsize=(10, 6))
+
+ax.plot(la_df['year'], la_df['mean_la'], 'o-', linewidth=2, markersize=8, color='#1f77b4')
+
+slope, intercept, r, p, se = stats.linregress(la_df['year'], la_df['mean_la'])
+ax.plot(la_df['year'], intercept + slope * la_df['year'], '--',
+        color='red', linewidth=2, label=f'Trend: +{slope:.2f}°/year')
+
+ax.set_xlabel('Year', fontsize=12)
+ax.set_ylabel('Average Launch Angle (degrees)', fontsize=12)
+ax.set_title('Launch Angle (2015-2025)', fontsize=14)
+ax.legend()
+
+plt.tight_layout()
+plt.savefig('figures/fig01_la_trend.png', dpi=150)
 ```
 
-A 4.5° jump in one year is implausible as a natural evolution. Some combination of Statcast calibration changes and genuine strategic shift explains this gap.
+![Launch angle increased from 11.7° to 17.8° over the decade](../../chapters/16_launch_angle/figures/fig01_la_trend.png)
 
-## The Ground Ball Decline
+The upward trend is clear: hitters have systematically elevated their batted balls across the Statcast era.
 
-The launch angle shift shows up clearly in batted ball types. Let's categorize by outcome:
+## Batted Ball Type Distribution
+
+We examine how the shift affected batted ball types.
 
 ```python
-# Define batted ball types by launch angle
-def classify_bb(la):
-    if la < 10:
-        return 'Ground Ball'
-    elif la < 25:
-        return 'Line Drive'
-    elif la < 50:
-        return 'Fly Ball'
-    else:
-        return 'Pop Up'
-
-batted_balls['bb_category'] = batted_balls['launch_angle'].apply(classify_bb)
-
-# Calculate percentages by year
-yearly_bb = batted_balls.groupby('game_year')['bb_category'].value_counts(normalize=True).unstack() * 100
-print(yearly_bb.round(1))
+la_df[['year', 'gb_rate', 'ld_rate', 'fb_rate', 'popup_rate']]
 ```
 
-| Year | Ground Ball | Line Drive | Fly Ball | Pop Up |
-|------|-------------|------------|----------|--------|
-| 2015 | 48.1% | 21.1% | 22.8% | 7.9% |
-| 2016 | 41.2% | 20.2% | 26.5% | 12.0% |
-| 2019 | 39.8% | 21.1% | 27.2% | 11.9% |
-| 2022 | 39.1% | 18.3% | 26.4% | 16.2% |
-| 2025 | 38.1% | 18.5% | 26.3% | 17.1% |
+|year|Ground Ball|Line Drive|Fly Ball|Pop Up|
+|----|-----------|----------|--------|------|
+|2015|48.1%|21.1%|22.8%|7.9%|
+|2017|41.2%|20.2%|26.5%|12.0%|
+|2019|39.8%|21.1%|27.2%|11.9%|
+|2022|39.1%|18.3%|26.4%|16.2%|
+|2025|38.1%|18.5%|26.3%|17.1%|
 
-![Batted Ball Types](../../chapters/16_launch_angle/figures/fig02_bb_types.png)
+Ground balls dropped by 10 percentage points (48.1% to 38.1%), while pop-ups more than doubled (7.9% to 17.1%). The fly ball revolution came with a cost.
 
-Ground balls dropped from 48% to 38%—a **10 percentage point decline**. That's the fly ball revolution in action. Hitters stopped hitting the ball on the ground.
+## Visualizing Batted Ball Types
+
+We plot batted ball type distribution in Figure 16.2.
+
+```python
+fig, ax = plt.subplots(figsize=(10, 6))
+
+ax.plot(la_df['year'], la_df['gb_rate'], 'o-', linewidth=2,
+        markersize=8, color='#1f77b4', label='Ground Ball')
+ax.plot(la_df['year'], la_df['fb_rate'], 's-', linewidth=2,
+        markersize=8, color='#ff7f0e', label='Fly Ball')
+ax.plot(la_df['year'], la_df['ld_rate'], '^-', linewidth=2,
+        markersize=8, color='#2ca02c', label='Line Drive')
+ax.plot(la_df['year'], la_df['popup_rate'], 'd-', linewidth=2,
+        markersize=8, color='#d62728', label='Pop Up')
+
+ax.set_xlabel('Year', fontsize=12)
+ax.set_ylabel('Percentage', fontsize=12)
+ax.set_title('Batted Ball Type Distribution (2015-2025)', fontsize=14)
+ax.legend()
+
+plt.tight_layout()
+plt.savefig('figures/fig02_bb_types.png', dpi=150)
+```
+
+![Ground balls declined while pop-ups increased dramatically](../../chapters/16_launch_angle/figures/fig02_bb_types.png)
+
+The cross-over pattern illustrates the trade-off: hitters elevated out of ground balls but often over-elevated into pop-ups.
 
 ## The Trade-Off: More Pop-Ups
 
-But here's the catch—the fly ball increase came with a cost:
+We quantify the pop-up cost of elevation.
 
 ```python
-# Pop-up rate over time
-popup_2015 = (batted_balls[batted_balls['game_year'] == 2015]['launch_angle'] >= 50).mean() * 100
-popup_2025 = (batted_balls[batted_balls['game_year'] == 2025]['launch_angle'] >= 50).mean() * 100
-print(f"Pop-ups 2015: {popup_2015:.1f}%")
-print(f"Pop-ups 2025: {popup_2025:.1f}%")
+popup_2015 = la_df[la_df['year'] == 2015]['popup_rate'].values[0]
+popup_2025 = la_df[la_df['year'] == 2025]['popup_rate'].values[0]
+popup_change = popup_2025 - popup_2015
 ```
 
-Pop-up rate jumped from 7.9% to 17.1%—more than double. When hitters try to elevate, they sometimes over-elevate. The same swing mechanics that produce fly balls also produce pop-ups.
+|Metric|2015|2025|Change|
+|------|----|----|------|
+|Pop-up Rate|7.9%|17.1%|**+9.2%**|
+|Ground Ball Rate|48.1%|38.1%|-10.0%|
+|Net|—|—|Trade-off|
 
-This is the fundamental trade-off of the launch angle approach: more home runs, but also more weak pop-ups. The middle ground—line drives—actually declined slightly.
+Pop-ups—essentially automatic outs—increased by 9.2 percentage points. The same swing mechanics that produce fly balls also produce pop-ups when mistimed.
 
-## The Sweet Spot
+## Sweet Spot Analysis
 
-Let's look at "sweet spot" rate—batted balls in the 8-32° range that produce the best outcomes:
+We examine "sweet spot" rate—batted balls in the 8-32° range that produce optimal outcomes.
 
 ```python
-# Sweet spot rate (8-32 degrees)
-def sweet_spot_rate(df):
-    return ((df['launch_angle'] >= 8) & (df['launch_angle'] <= 32)).mean() * 100
-
-yearly_ss = batted_balls.groupby('game_year').apply(sweet_spot_rate)
-print(yearly_ss.round(1))
+la_df[['year', 'sweet_spot']]
 ```
 
-| Year | Sweet Spot Rate |
-|------|-----------------|
-| 2015 | 33.9% |
-| 2019 | 34.2% |
-| 2022 | 30.1% |
-| 2025 | 30.4% |
+|year|Sweet Spot Rate|
+|----|---------------|
+|2015|33.9%|
+|2017|34.0%|
+|2019|34.2%|
+|2022|30.1%|
+|2025|30.4%|
 
-Sweet spot rate has actually declined slightly. The revolution wasn't about hitting more balls in the optimal zone—it was about hitting balls *at all* in the air rather than on the ground.
+Sweet spot rate has actually declined from 33.9% to 30.4%. The revolution was not about hitting more balls in the optimal zone—it was about avoiding ground balls at all costs.
 
-## The Distribution Shift
+## Statistical Validation
 
-Let's visualize how the entire launch angle distribution has changed:
+We validate the launch angle change by comparing early (2016-2018) and late (2023-2025) periods.
 
 ```python
-# Compare distributions
-for year in [2015, 2019, 2025]:
-    year_data = batted_balls[batted_balls['game_year'] == year]
-    p25 = year_data['launch_angle'].quantile(0.25)
-    p50 = year_data['launch_angle'].median()
-    p75 = year_data['launch_angle'].quantile(0.75)
-    print(f"{year}: p25={p25:.0f}°, p50={p50:.0f}°, p75={p75:.0f}°")
+# Aggregate batted balls for both periods
+early_la, late_la = [], []
+
+for year in [2016, 2017, 2018]:
+    df = load_season(year, columns=['launch_angle'])
+    batted = df[df['launch_angle'].notna()]
+    early_la.extend(batted['launch_angle'].tolist())
+
+for year in [2023, 2024, 2025]:
+    df = load_season(year, columns=['launch_angle'])
+    batted = df[df['launch_angle'].notna()]
+    late_la.extend(batted['launch_angle'].tolist())
+
+early = np.array(early_la)
+late = np.array(late_la)
+
+# T-test
+t_stat, p_val = stats.ttest_ind(early, late)
+
+# Cohen's d
+pooled_std = np.sqrt((early.var() + late.var()) / 2)
+cohens_d = (late.mean() - early.mean()) / pooled_std
 ```
 
-![Distribution Comparison](../../chapters/16_launch_angle/figures/fig03_la_distribution.png)
+|Test|Early Mean|Late Mean|Change|Cohen's d|Effect|
+|----|----------|---------|------|---------|------|
+|Launch Angle|15.43°|17.24°|+1.81°|0.059|negligible|
 
-The entire distribution shifted upward. Even the 25th percentile—the low end of batted balls—moved from negative angles (ground balls) to positive angles (balls hit in the air).
-
-## Is This Real? Statistical Validation
-
-Let's formally test whether launch angle has changed:
-
-```python
-from scipy import stats
-import numpy as np
-
-# Compare early vs late periods
-early = batted_balls[batted_balls['game_year'].isin([2016, 2017, 2018])]
-late = batted_balls[batted_balls['game_year'].isin([2023, 2024, 2025])]
-
-early_la = early['launch_angle'].values
-late_la = late['launch_angle'].values
-
-# t-test and effect size
-t_stat, p_value = stats.ttest_ind(early_la, late_la)
-pooled_std = np.sqrt((early_la.var() + late_la.var()) / 2)
-cohens_d = (late_la.mean() - early_la.mean()) / pooled_std
-
-print(f"Early period: {early_la.mean():.2f}°")
-print(f"Late period: {late_la.mean():.2f}°")
-print(f"t = {t_stat:.2f}, p = {p_value:.3f}, d = {cohens_d:.3f}")
-```
-
-| Test | Early Mean | Late Mean | Change | Cohen's d |
-|------|------------|-----------|--------|-----------|
-| Launch Angle | 15.43° | 17.24° | +1.81° | 0.059 (negligible) |
-
-Wait—the effect size is negligible? That seems wrong given the dramatic changes in batted ball types.
-
-The explanation: launch angle has enormous variance (standard deviation ~30°). A 1.8° change in means represents a real shift in strategy, but relative to the huge spread of outcomes (from -80° ground balls to +90° pop-ups), it's statistically small. The batted ball type percentages tell the practical story better than the raw means.
+The effect size is negligible due to the enormous variance in launch angle (std ~30°). A 1.8° change in means is meaningful strategically but small relative to the spread from -80° ground balls to +90° pop-ups. The batted ball type percentages better capture the practical significance.
 
 ## The Strategic Logic
 
-Why did hitters embrace elevation? The math is compelling:
+The elevation strategy makes sense for power hitters despite the pop-up cost. Ground balls almost never become home runs. Fly balls with sufficient exit velocity do. For hitters with power, accepting more pop-ups is worth it for the additional home runs.
 
 ```python
-# Run value by batted ball type (approximate)
-print("Expected run value by batted ball type:")
-print("Ground Ball: -0.05 runs")
-print("Line Drive:  +0.45 runs")
-print("Fly Ball:    +0.12 runs")
-print("Pop Up:      -0.90 runs")
-print()
-print("Trade-off calculation:")
-print("Losing 10% ground balls saves: 10 × 0.05 = 0.5 runs/100 BBs")
-print("Gaining 3.5% fly balls adds: 3.5 × 0.12 = 0.4 runs/100 BBs")
-print("Gaining 9% pop-ups costs: 9 × 0.90 = 8.1 runs/100 BBs")
+# Approximate run values by batted ball type
+run_values = {
+    'Ground Ball': -0.05,
+    'Line Drive': +0.45,
+    'Fly Ball': +0.12,
+    'Pop Up': -0.90
+}
+
+# The calculation favors elevation for power hitters:
+# - Losing 10% GB saves: 10 × 0.05 = 0.5 runs/100 BB
+# - Gaining 3.5% FB adds: 3.5 × 0.12 = 0.4 runs/100 BB
+# - But FB with high EV become HR: +1.4 runs each
 ```
 
-On pure expected value, the trade-off looks bad. But this misses something crucial: home runs. Fly balls with sufficient exit velocity become home runs. Ground balls almost never do. For power hitters, the elevated approach pays off despite the pop-ups.
+## Summary
 
-## What We Learned
+The launch angle revolution transformed baseball offense from 2015 to 2025:
 
-Let's summarize what the data revealed:
+1. **Average launch angle increased 6.1°** from 11.7° to 17.8°
+2. **Ground balls dropped 10%** from 48.1% to 38.1%
+3. **Pop-ups more than doubled** from 7.9% to 17.1%
+4. **Fly balls rose modestly** from 22.8% to 26.3%
+5. **Sweet spot rate declined** from 33.9% to 30.4%
+6. **Effect size negligible** (Cohen's d = 0.06) due to high variance
 
-1. **Launch angle increased 6°**: From 11.7° (2015) to 17.8° (2025)
-2. **Ground balls dropped 10%**: From 48.1% to 38.1%
-3. **Pop-ups more than doubled**: From 7.9% to 17.1%
-4. **Fly balls up modestly**: From 22.8% to 26.3%
-5. **Sweet spot rate stable**: ~30-34%, no improvement
-6. **The revolution was strategic**: Hitters chose elevation, accepting trade-offs
+The revolution explains what exit velocity stability could not. Hitters did not hit the ball harder—they hit it at better angles for power. Combined with the juiced ball era (which amplified fly ball distance), this produced the home run surge of the late 2010s. The trade-off—more strikeouts and pop-ups—was deemed acceptable for the power gains.
 
-The launch angle revolution explains what exit velocity couldn't. Hitters didn't hit the ball harder—they hit it at better angles for power. Combined with the juiced ball era (which amplified fly ball distance), this produced the home run surge of the late 2010s.
+## Further Reading
 
-## Try It Yourself
+- Sullivan, J. (2016). "The Fly Ball Revolution." *FanGraphs*.
+- Arthur, R. (2017). "How Hitters Changed the Game." *FiveThirtyEight*.
 
-The complete analysis code is available at:
-`github.com/mingksong/mlb-statcast-book/chapters/16_launch_angle/`
+## Exercises
 
-Try modifying the code to explore:
-- Which players changed their launch angle the most?
-- How does launch angle interact with exit velocity for home runs?
-- Is the trade-off (more pop-ups) worth it for power hitters?
+1. Identify hitters who changed their launch angle most dramatically between 2015 and 2020. Did their power numbers improve?
+
+2. Calculate the home run probability by exit velocity AND launch angle. What is the optimal combination?
+
+3. Compare launch angle strategies for different hitter types (power vs contact). Do all hitters benefit equally from elevation?
 
 ```bash
 cd chapters/16_launch_angle
